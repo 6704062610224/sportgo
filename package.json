@@ -1,0 +1,23 @@
+{
+  "name": "sportgo",
+  "version": "1.0.0",
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/6704062610224/sportgo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/6704062610224/sportgo/issues"
+  },
+  "homepage": "https://github.com/6704062610224/sportgo#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.94.1"
+  }
+}

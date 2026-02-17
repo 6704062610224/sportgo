@@ -37,7 +37,7 @@
 //   });
 // });
 
-// const PORT = 5000;
+// const PORT = 8000;
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);
 // });
@@ -67,27 +67,168 @@
 
 
 
-const express = require('express');
-const cors = require('cors');
-const pool = require('./db'); // ดึงการเชื่อมต่อจาก db.js ที่คุณเพิ่งทำ
-require('dotenv').config();
+// const express = require('express');
+// const cors = require('cors');
+// const pool = require('./db'); // ดึงการเชื่อมต่อจาก db.js ที่คุณเพิ่งทำ
+// require('dotenv').config();
 
+// const app = express();
+// app.use(cors());
+// app.use(express.json());
+
+// // API สำหรับดึงข้อมูลสนามทั้งหมดจาก Supabase
+// app.get('/api/courts', async (req, res) => {
+//   try {
+//     const result = await pool.query('SELECT * FROM courts ORDER BY id ASC');
+//     res.json(result.rows); // PostgreSQL คืนค่าข้อมูลใน rows
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).json({ error: "Server Error: ไม่สามารถดึงข้อมูลสนามได้" });
+//   }
+// });
+
+// const PORT = process.env.PORT || 8000;
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
+
+
+// app.use(cors({
+//   origin: 'http://localhost:5173', // หรือ domain ของ React
+//   credentials: true
+// }));
+
+// server.js
+
+// import express from 'express';
+// import cors from 'cors';
+// import dotenv from 'dotenv';
+// import { createClient } from '@supabase/supabase-js';
+
+// dotenv.config();
+// const app = express();
+
+// // 1️⃣ ตั้งค่า CORS ให้ frontend ติดต่อได้
+// app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// app.use(express.json());
+
+// // 2️⃣ สร้าง Supabase client ด้วย service_role key (เฉพาะ backend)
+// const supabase = createClient(
+//   process.env.SUPABASE_URL,
+//   process.env.SUPABASE_SERVICE_ROLE_KEY
+// );
+
+// // 3️⃣ Route สำหรับ register user
+// app.post('/api/register', async (req, res) => {
+//   const { name, email, password } = req.body;
+
+//   try {
+//     // สร้าง user โดยไม่ส่ง email verification
+//     const { data: user, error: authError } = await supabase.auth.admin.createUser({
+//       email,
+//       password,
+//       email_confirm: true
+//     });
+
+//     if (authError) return res.status(400).json({ error: authError.message });
+
+//     // บันทึกข้อมูลเพิ่มเติมใน table users
+//     const { data, error: dbError } = await supabase
+//       .from('users')
+//       .insert([{ id: user.id, name, email }]);
+
+//     if (dbError) return res.status(400).json({ error: dbError.message });
+
+//     res.json({ message: 'User created successfully', user });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// const PORT = process.env.PORT || 8000;
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+import pool from './db.js'; // ถ้าคุณยังต้องใช้ pool.query
+
+dotenv.config();
 const app = express();
-app.use(cors());
+
+// 1️⃣ ตั้งค่า CORS ให้ frontend ติดต่อได้
+// app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5175',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
-// API สำหรับดึงข้อมูลสนามทั้งหมดจาก Supabase
+// 2️⃣ สร้าง Supabase client ด้วย service_role key (เฉพาะ backend)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// =======================
+// Route สำหรับดึงข้อมูลสนาม (PostgreSQL)
 app.get('/api/courts', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM courts ORDER BY id ASC');
-    res.json(result.rows); // PostgreSQL คืนค่าข้อมูลใน rows
+    res.json(result.rows);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Server Error: ไม่สามารถดึงข้อมูลสนามได้" });
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// =======================
+// Route register
+app.post('/api/register', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    // สร้าง user (ไม่ต้องยืนยัน email เพราะใช้ service_role)
+    const { data: user, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) return res.status(400).json({ error: authError.message });
+
+    // บันทึกข้อมูลเพิ่มเติมใน table users
+    const { data, error: dbError } = await supabase
+      .from('users') // table ของคุณ
+      .insert([{ id: user.id, username, email }]);
+
+    if (dbError) return res.status(400).json({ error: dbError.message });
+
+    res.json({ message: 'User created successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
+// =======================
+// Route login
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: 'Login successful', user: data.user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =======================
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

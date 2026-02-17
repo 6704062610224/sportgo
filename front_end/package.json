@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.94.1",
     "@tailwindcss/vite": "^4.1.18",
+    "axios": "^1.13.4",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-calendar": "^6.0.0",

@@ -486,7 +486,7 @@
 //   useEffect(() => {
 //     const fetchCourts = async () => {
 //       try {
-//         const response = await fetch('http://localhost:5000/api/courts');
+//         const response = await fetch('http://localhost:/api/courts');
 //         if (!response.ok) throw new Error('Network response was not ok'); // เช็คว่า Server ตอบกลับปกติไหม
         
 //         const data = await response.json();
@@ -662,7 +662,7 @@ const BookingPage = () => {
 
   // ดึงข้อมูลจาก API
   useEffect(() => {
-    fetch('http://localhost:5000/api/courts')
+    fetch('http://localhost:8000/api/courts')
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(item => ({
@@ -678,7 +678,7 @@ const BookingPage = () => {
   }, []);
 
   const timeSlots = ["09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"];
-  const categories = [{ name: "ทั้งหมด", icon: "🏠" }, { name: "ฟุตบอล", icon: "⚽" }, { name: "ฟุตซอล", icon: "👟" }, { name: "แบดมินตัน", icon: "🏸" }, { name: "บาสเกตบอล", icon: "🏀" }, { name: "ปิงปอง", icon: "🏓" }, { name: "วอลเลย์บอล", icon: "🏐" }, { name: "เทนนิส", icon: "🎾" }];
+  const categories = [{ name: "ทั้งหมด", icon: "🏠" }, { name: "ฟุตบอล", icon: "⚽" }, { name: "แบดมินตัน", icon: "🏸" }, { name: "บาสเกตบอล", icon: "🏀" }, { name: "ปิงปอง", icon: "🏓" }, { name: "วอลเลย์บอล", icon: "🏐" }];
 
   const filteredCourts = filter === "ทั้งหมด" ? courts : courts.filter(c => c.category === filter);
 

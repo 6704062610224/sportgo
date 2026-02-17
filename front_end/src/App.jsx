@@ -97,9 +97,10 @@
 
 
 
-import React, { useState } from 'react';
+import React, { useEffect,useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { supabase } from './supabaseClient';
 
 // User & Auth Pages
 import HomePage from './Pages/User/HomePage';
@@ -115,39 +116,111 @@ import RegisterPage from './Pages/Auth/RegisterPage';
 import AdminDashboard from './Pages/Admin/AdminDashboard';
 import AdminCourts from './Pages/Admin/AdminCourts';
 
+// function App() {
+//   // ในอนาคตค่านี้จะมาจากระบบ Login จริง
+//   const [user, setUser] = useState({ loggedIn: true, role: 'admin' }); 
+//   // const [user, setUser] = useState({ loggedIn: true, role: 'user' }); 
+
+//   return (
+//     <Router>
+//       {/* <Navbar user={user} /> */}
+//       <Navbar user={user} setUser={setUser} />
+//       <main className="min-h-screen bg-gray-50">
+//         <Routes>
+//           <Route path="/" element={<HomePage />} />
+//           <Route path="/login" element={<LoginPage setUser={setUser} />} />
+//           <Route path="/register" element={<RegisterPage />} />
+          
+//           {/* User Only Routes */}
+//           <Route path="/booking" element={<BookingPage />} />
+//           <Route path="/pay" element={<PayPage />} />
+//           <Route path="/borrow" element={<BorrowPage />} />
+//           <Route path="/history" element={<HistoryPage />} />
+
+//           {/* Admin Protected Routes */}
+//           <Route 
+//             path="/admin" 
+//             element={user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} 
+//           />
+//           <Route 
+//             path="/admin/courts" 
+//             element={user.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
+//           />
+//         </Routes>
+//       </main>
+//     </Router>
+//   );
+// }
 function App() {
-  // ในอนาคตค่านี้จะมาจากระบบ Login จริง
-  const [user, setUser] = useState({ loggedIn: true, role: 'admin' }); 
-  // const [user, setUser] = useState({ loggedIn: true, role: 'user' }); 
+  // const [user, setUser] = useState(null);
+  const [user, setUser] = useState({
+    loggedIn: false,
+    role: null,
+    email: null,
+    username: null,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // 👉 ดึง role จาก table users
+      const { data: profile } = await supabase
+        .from('users')
+        .select('id, username, role')
+        .eq('id', session.user.id)
+        .single();
+
+      setUser({
+        id: session.user.id,
+        email: session.user.email,
+        ...profile,
+      });
+
+      setLoading(false);
+    };
+
+    loadUser();
+  }, []);
+
+  if (loading) return null;
 
   return (
     <Router>
-      {/* <Navbar user={user} /> */}
       <Navbar user={user} setUser={setUser} />
-      <main className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage setUser={setUser} />} />
-          <Route path="/register" element={<RegisterPage />} />
+
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage setUser={setUser} />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<HomePage />} />
+           <Route path="/login" element={<LoginPage setUser={setUser} />} />
+           <Route path="/register" element={<RegisterPage />} />
           
-          {/* User Only Routes */}
-          <Route path="/booking" element={<BookingPage />} />
-          <Route path="/pay" element={<PayPage />} />
-          <Route path="/borrow" element={<BorrowPage />} />
+           {/* User Only Routes */}
+           <Route path="/booking" element={<BookingPage />} />
+           <Route path="/pay" element={<PayPage />} />
+           <Route path="/borrow" element={<BorrowPage />} />
           <Route path="/history" element={<HistoryPage />} />
 
-          {/* Admin Protected Routes */}
-          <Route 
-            path="/admin" 
-            element={user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} 
-          />
-          <Route 
+        <Route
+          path="/admin"
+          element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />}
+        />
+        <Route 
             path="/admin/courts" 
             element={user.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
           />
-        </Routes>
-      </main>
+      </Routes>
     </Router>
   );
 }
+
 export default App;
