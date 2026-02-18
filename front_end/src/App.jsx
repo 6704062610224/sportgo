@@ -216,7 +216,7 @@ function App() {
         />
         <Route 
             path="/admin/courts" 
-            element={user.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
+            element={user?.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
           />
       </Routes>
     </Router>

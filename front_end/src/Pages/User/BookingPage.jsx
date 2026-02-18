@@ -688,11 +688,24 @@ const BookingPage = () => {
 
   const totalPrice = selectedCourt ? selectedTimes.length * selectedCourt.price : 0;
 
-  const confirmBooking = () => {
-    if (selectedCourt && selectedTimes.length > 0) {
-      navigate('/pay', { state: { courtData: selectedCourt, bookingTimes: selectedTimes, totalAmount: totalPrice } });
-    }
-  };
+  // const confirmBooking = () => {
+  //   if (selectedCourt && selectedTimes.length > 0) {
+  //     navigate('/pay', { state: { courtData: selectedCourt, bookingTimes: selectedTimes, totalAmount: totalPrice } });
+  //   }
+  // };
+  // ในฟังก์ชัน confirmBooking ของ BookingPage.jsx
+const confirmBooking = () => {
+  if (selectedCourt && selectedTimes.length > 0) {
+    // ย้ายไปหน้ายืมอุปกรณ์ก่อน
+    navigate('/borrow', { 
+      state: { 
+        courtData: selectedCourt, 
+        bookingTimes: selectedTimes, 
+        courtAmount: totalPrice // เก็บราคาสนามไว้บวกต่อ
+      } 
+    });
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">

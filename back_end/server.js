@@ -229,6 +229,51 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// server.js (Back-end)
+app.post('/api/create-booking', async (req, res) => {
+  const { user_id, court_id, bookingTimes, selectedEquipments, total_price } = req.body;
+
+  try {
+    // 1. บันทึกลงตาราง bookings
+    const { data: booking, error: bError } = await supabase
+      .from('bookings')
+      .insert([{ 
+        user_id, 
+        court_id, 
+        total_price, 
+        status: 'waiting_verify' // สถานะรอแอดมินตรวจสลิป
+      }])
+      .select()
+      .single();
+
+    if (bError) throw bError;
+
+    // 2. บันทึกช่วงเวลาลง booking_time_slots
+    if (bookingTimes && bookingTimes.length > 0) {
+      const timeData = bookingTimes.map(time => ({
+        booking_id: booking.id,
+        time_slot: time
+      }));
+      const { error: tError } = await supabase.from('booking_time_slots').insert(timeData);
+      if (tError) throw tError;
+    }
+
+    // 3. บันทึกรายการอุปกรณ์ลง booking_equipments
+    if (selectedEquipments && selectedEquipments.length > 0) {
+      const equipData = selectedEquipments.map(item => ({
+        booking_id: booking.id,
+        equipment_id: item.id,
+        quantity: item.quantity
+      }));
+      const { error: eError } = await supabase.from('booking_equipments').insert(equipData);
+      if (eError) throw eError;
+    }
+
+    res.status(200).json({ success: true, message: "บันทึกการจองเรียบร้อย", booking_id: booking.id });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // =======================
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
