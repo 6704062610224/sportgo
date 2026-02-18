@@ -61,7 +61,7 @@ const RegisterPage = () => {
     email,
     password,
     options: {
-      emailRedirectTo: 'http://localhost:5175/login',
+      emailRedirectTo: 'http://localhost:5173/login',
       data: {
         username: username
       }
@@ -78,7 +78,7 @@ const RegisterPage = () => {
 
   const { error: dbError } = await supabase
     .from('users')
-    .insert([
+    .upsert([
       {
         id: user.id,
         username: username,
