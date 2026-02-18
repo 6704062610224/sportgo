@@ -424,6 +424,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
+import { supabase } from "../supabaseClient";
 
 export default function Navbar({ user, setUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -440,15 +441,19 @@ export default function Navbar({ user, setUser }) {
   //   setIsMenuOpen(false);
   //   navigate("/login");
   // };
-  const handleLogout = () => {
-    setUser({
-      loggedIn: false,
-      role: null,
-      email: null,
-      username: null,
-    });
-    setIsMenuOpen(false);
-    navigate("/login");
+  const handleLogout = async () => {
+    // setUser({
+    //   loggedIn: false,
+    //   role: null,
+    //   email: null,
+    //   username: null,
+    // });
+    // setIsMenuOpen(false);
+    // navigate("/login");
+    await supabase.auth.signOut();   // ⭐ สำคัญมาก
+  setUser(null);                   // เคลียร์ state
+  setIsMenuOpen(false);
+  navigate("/login");
   };
 
 

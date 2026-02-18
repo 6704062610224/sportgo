@@ -231,30 +231,33 @@ const RegisterPage = () => {
   //   setLoading(false);
   // };
   const handleRegister = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setErrorMsg('');
-  setSuccessMsg('');
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: 'http://localhost:5173/login',
-      data: { username }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        // emailRedirectTo: 'http://localhost:5173/login',
+        data: { username }
+      }
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
+      setLoading(false);
+      return;
     }
-  });
 
-  if (error) {
-    setErrorMsg(error.message);
+    // สมัครสำเร็จ → รอ email confirm
+    setSuccessMsg('Register Success');
     setLoading(false);
-    return;
-  }
-
-  // สมัครสำเร็จ → รอ email confirm
-  setSuccessMsg('Please check your email to confirm registration');
-  setLoading(false);
-};
+    setTimeout(() => {
+        navigate('/');
+    }, 1500);
+  };
 
 
 

@@ -162,33 +162,43 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      // 👉 ดึง role จาก table users
-      const { data: profile } = await supabase
-        .from('users')
-        .select('id, username, role')
-        .eq('id', session.user.id)
-        .single();
-
-      setUser({
-        id: session.user.id,
-        email: session.user.email,
-        ...profile,
-      });
-
+  const getProfile = async (session) => {
+    if (!session) {
+      setUser(null);          // ✅ เคลียร์ user
       setLoading(false);
-    };
+      return;
+    }
 
-    loadUser();
-  }, []);
+    const { data: profile } = await supabase
+      .from("users")
+      .select("id, username, role")
+      .eq("id", session.user.id)
+      .single();
+
+    setUser({
+      id: session.user.id,
+      email: session.user.email,
+      username: profile?.username,
+      role: profile?.role,
+    });
+
+    setLoading(false);
+  };
+
+  // โหลดตอนเปิดเว็บ
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    getProfile(session);
+  });
+
+  // ฟังทุก auth event (LOGIN / LOGOUT)
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      getProfile(session);   // ✅ session = null ตอน logout
+    }
+  );
+
+  return () => listener.subscription.unsubscribe();
+}, []);
 
   if (loading) return null;
 
