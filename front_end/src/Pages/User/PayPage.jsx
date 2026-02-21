@@ -284,7 +284,7 @@ export default function PayPage() {
     bookingTimes = [], 
     totalAmount = 0, 
     selectedEquipments = [],
-    bookingDate = "" 
+    bookingDate = null 
   } = location.state || {};
 
   const [qrCode, setQrCode] = useState("sample");
@@ -315,6 +315,12 @@ export default function PayPage() {
     }
   }, [totalAmount]);
 
+  const today = new Date().toISOString().slice(0, 10);
+
+  const safeBookingDate =
+    bookingDate && bookingDate !== ""
+      ? bookingDate
+      : today;
   const handleConfirmPayment = async () => {
     if (!user) return alert("รอกำลังโหลดข้อมูลผู้ใช้...");
     if (!file) return alert("กรุณาแนบสลิปโอนเงินก่อนครับ");
@@ -322,9 +328,26 @@ export default function PayPage() {
     // เตรียมข้อมูลแบบ FormData (สำหรับส่งไฟล์รูปภาพ)
     const formData = new FormData();
     formData.append('user_id', user.id);
-    formData.append('court_id', courtData?.id);
-    formData.append('total_price', totalAmount);
-    formData.append('bookingDate', bookingDate);
+    // formData.append('court_id', courtData?.id);
+    if (courtData?.id) {
+      formData.append('court_id', courtData.id);
+    } 
+    // else {
+    //   alert("ไม่พบข้อมูลสนาม");
+    //   return;
+    // }
+    
+    if (!totalAmount || isNaN(totalAmount)) {
+      alert("ยอดเงินไม่ถูกต้อง");
+      return;
+    }
+
+    formData.append('total_price', Number(totalAmount));
+    // formData.append('total_price', totalAmount);
+    // formData.append('bookingDate', bookingDate);
+    if (safeBookingDate) {
+      formData.append('bookingDate', safeBookingDate);
+    }
     formData.append('bookingTimes', JSON.stringify(bookingTimes));
     formData.append('selectedEquipments', JSON.stringify(selectedEquipments));
     formData.append('slip_image', file); // แนบไฟล์รูป

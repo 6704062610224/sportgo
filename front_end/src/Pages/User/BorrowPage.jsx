@@ -209,8 +209,9 @@ export default function BorrowPage() {
   const { 
     courtData = null, 
     bookingTimes = [], 
-    courtAmount = 0 
-  } = location.state || {};
+    courtAmount = 0,
+    bookingDate = null
+} = location.state || {};
   
   const [equipments, setEquipments] = useState([]);
   const [selectedEquips, setSelectedEquips] = useState({});
@@ -280,6 +281,11 @@ export default function BorrowPage() {
   const equipTotal = cartItems.reduce((sum, item) => sum + (item.price_per_unit * item.qty), 0);
   const grandTotal = (courtAmount || 0) + equipTotal;
 
+  const today = new Date().toISOString().slice(0, 10);
+  const safeBookingDate =
+  bookingDate && bookingDate !== ""
+    ? bookingDate
+    : today;
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-40">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -368,7 +374,21 @@ export default function BorrowPage() {
 
             <button 
               disabled={grandTotal === 0}
-              onClick={() => navigate('/pay', { state: { ...location.state, selectedEquipments: cartItems, totalAmount: grandTotal } })}
+              onClick={() => {
+                if (!safeBookingDate) {
+                  alert("ไม่พบวันที่จอง กรุณาเลือกวันที่ใหม่");
+                  return;
+                }
+
+                navigate('/pay', {
+                  state: {
+                    ...location.state,
+                    bookingDate: safeBookingDate,
+                    selectedEquipments: cartItems,
+                    totalAmount: grandTotal
+                  }
+                });
+              }}
               className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold mt-6 transition-all disabled:bg-gray-200"
             >
               ไปหน้าชำระเงิน

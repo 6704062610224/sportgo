@@ -771,12 +771,6 @@
 
 
 
-
-
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -796,12 +790,14 @@ const BookingPage = () => {
     fetch('http://localhost:8000/api/courts')
       .then(res => res.json())
       .then(data => {
-        const formatted = data.map(item => ({
+        const formatted = data
+        .filter(item => item.is_available) // ❗ เพิ่ม
+        .map(item => ({
           id: item.id,
           name: item.name,
           category: item.category,
-          price: parseFloat(item.price_per_hour), 
-          image: item.image_url 
+          price: parseFloat(item.price_per_hour),
+          image: item.image_url
         }));
         setCourts(formatted);
       })
@@ -842,6 +838,14 @@ const BookingPage = () => {
   const totalPrice = selectedCourt ? selectedTimes.length * selectedCourt.price : 0;
 
   const confirmBooking = () => {
+    if (selectedTimes.length === 0) {
+      alert("กรุณาเลือกเวลา");
+      return;
+    }
+    if (bookedTimes.some(t => selectedTimes.includes(t))) {
+      alert("มีบางช่วงเวลาถูกจองไปแล้ว");
+      return;
+    }
     if (selectedCourt && selectedTimes.length > 0) {
       navigate('/borrow', { 
         state: { 
@@ -852,6 +856,7 @@ const BookingPage = () => {
         } 
       });
     }
+    // navigate('/borrow', { ... });
   };
 
   // คำนวณวันที่จองล่วงหน้าสูงสุด (วันนี้ + 6 วัน = 7 วัน)

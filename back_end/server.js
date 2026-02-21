@@ -311,7 +311,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-import pool from './db.js';
+// import pool from './db.js';
+
+import multer from 'multer';
+
+const upload = multer({
+  storage: multer.memoryStorage()
+});
 
 dotenv.config();
 const app = express();
@@ -328,13 +334,27 @@ const supabase = createClient(
 );
 
 // --- ดึงข้อมูลสนามทั้งหมด ---
+// app.get('/api/courts', async (req, res) => {
+//   try {
+//     const result = await pool.query('SELECT * FROM courts ORDER BY id ASC');
+//     res.json(result.rows);
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).json({ error: "Server Error: ไม่สามารถดึงข้อมูลสนามได้" });
+//   }
+// });
 app.get('/api/courts', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM courts ORDER BY id ASC');
-    res.json(result.rows);
+    const { data, error } = await supabase
+      .from('courts')
+      .select('*');
+
+    if (error) throw error;
+
+    res.json(data); // ✅ array
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "Server Error: ไม่สามารถดึงข้อมูลสนามได้" });
+    console.error(err);
+    res.status(500).json([]); // ✅ ยังเป็น array
   }
 });
 
@@ -357,19 +377,43 @@ app.get('/api/booked-slots', async (req, res) => {
 });
 
 // --- บันทึกการจอง (Booking Transaction) ---
-app.post('/api/create-booking', async (req, res) => {
-  const { user_id, court_id, bookingTimes, selectedEquipments, total_price, bookingDate } = req.body;
-
+app.post('/api/create-booking', upload.single('slip_image'), async (req, res) => {
   try {
-    // 1. บันทึกลงตาราง bookings
+    const { user_id, court_id, total_price, bookingDate } = req.body;
+
+    const bookingTimes = JSON.parse(req.body.bookingTimes || '[]');
+    const selectedEquipments = JSON.parse(req.body.selectedEquipments || '[]');
+
+    const slipFile = req.file;
+    if (!slipFile) {
+      return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
+    }
+
+    const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('receipts')
+      .upload(fileName, slipFile.buffer, {
+        contentType: slipFile.mimetype
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('receipts')
+      .getPublicUrl(fileName);
+
+    // บันทึก booking
     const { data: booking, error: bError } = await supabase
       .from('bookings')
-      .insert([{ 
-        user_id, 
-        court_id, 
-        total_price, 
-        booking_date: bookingDate, // วันที่เข้าใช้บริการ
-        status: 'pending'
+      .insert([{
+        user_id,
+        court_id,
+        total_price,
+        booking_date: bookingDate,
+        receipt_url: data.publicUrl,
+        status: 'pending',
+        
       }])
       .select()
       .single();
@@ -380,7 +424,7 @@ app.post('/api/create-booking', async (req, res) => {
     if (bookingTimes && bookingTimes.length > 0) {
       const timeData = bookingTimes.map(time => ({
         booking_id: booking.id,
-        court_id: court_id,       // ระบุสนามเพื่อให้เช็คง่ายขึ้น
+        court_id: court_id || null,       // ระบุสนามเพื่อให้เช็คง่ายขึ้น
         booking_date: bookingDate, // ระบุวันที่เพื่อให้เช็คง่ายขึ้น
         time_slot: time
       }));

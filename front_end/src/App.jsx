@@ -115,7 +115,7 @@ import RegisterPage from './Pages/Auth/RegisterPage';
 // Admin Pages
 import AdminDashboard from './Pages/Admin/AdminDashboard';
 import AdminCourts from './Pages/Admin/AdminCourts';
-
+import ManageBorrowPage from "./Pages/Admin/ManageBorrowPage";
 // function App() {
 //   // ในอนาคตค่านี้จะมาจากระบบ Login จริง
 //   const [user, setUser] = useState({ loggedIn: true, role: 'admin' }); 
@@ -164,7 +164,12 @@ function App() {
   useEffect(() => {
   const getProfile = async (session) => {
     if (!session) {
-      setUser(null);          // ✅ เคลียร์ user
+      setUser({
+        id: null,
+        email: null,
+        username: null,
+        role: null,
+      });          // ✅ เคลียร์ user
       setLoading(false);
       return;
     }
@@ -225,8 +230,14 @@ function App() {
           element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />}
         />
         <Route 
-            path="/admin/courts" 
-            element={user?.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
+          path="/admin/courts" 
+          element={user?.role === 'admin' ? <AdminCourts /> : <Navigate to="/" />} 
+        />
+          <Route
+            path="/admin/borrow"
+            element={user?.role === "admin"
+              ? <ManageBorrowPage />
+              : <Navigate to="/" />}
           />
       </Routes>
     </Router>

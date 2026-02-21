@@ -473,10 +473,11 @@ export default function Navbar({ user, setUser }) {
           <div className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-500">
             {user?.role === "admin" && isAdminPath ? (
               <>
-                <Link to="/admin" className="text-teal-600">
+                <Link to="/admin" className="">
                   DASHBOARD
                 </Link>
                 <Link to="/admin/courts">MANAGE COURTS</Link>
+                <Link to="/admin/borrow">MANAGE BORROW</Link>
               </>
             ) : (
               <>

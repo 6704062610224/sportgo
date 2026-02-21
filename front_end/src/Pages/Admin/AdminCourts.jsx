@@ -82,21 +82,69 @@
 
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
+import { supabase } from "../../supabaseClient";
 const AdminCourts = () => {
-  const [courts, setCourts] = useState([
-    { id: 1, name: "สนามฟุตบอล 1", category: "ฟุตบอล", price: 500, status: "available" },
-    { id: 2, name: "โต๊ะปิงปอง 1", category: "ปิงปอง", price: 100, status: "maintenance" },
-  ]);
+  const [courts, setCourts] = useState([]);
+  useEffect(() => {
+  const fetchCourts = async () => {
+    const { data, error } = await supabase
+      .from("courts")
+      .select(`
+        id,
+        name,
+        category,
+        price_per_hour,
+        is_available
+      `)
+      .order("id");
 
-  const toggleStatus = (id) => {
-    setCourts(courts.map(c => 
-      c.id === id ? { ...c, status: c.status === 'available' ? 'maintenance' : 'available' } : c
-    ));
+    if (!error) {
+      setCourts(data);
+    } else {
+      console.error(error);
+    }
   };
 
+  fetchCourts();
+}, []);
+
+ const toggleStatus = async (court) => {
+    const newStatus = !court.is_available;
+
+    const { error } = await supabase
+      .from("courts")
+      .update({ is_available: newStatus })
+      .eq("id", court.id);
+
+    if (!error) {
+      setCourts(prev =>
+        prev.map(c =>
+          c.id === court.id
+            ? { ...c, is_available: newStatus }
+            : c
+        )
+      );
+    }
+  };
+
+  const deleteCourt = async (courtId) => {
+    const confirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสนามนี้?");
+    if (!confirm) return;
+
+    const { error } = await supabase
+      .from("courts")
+      .delete()
+      .eq("id", courtId);
+
+    if (!error) {
+      setCourts(prev => prev.filter(c => c.id !== courtId));
+    } else {
+      console.error(error);
+      alert("ลบไม่สำเร็จ");
+    }
+  };
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* 1. Sidebar - คงที่ไว้ด้านซ้าย */}
@@ -161,25 +209,30 @@ const AdminCourts = () => {
                       </span>
                     </td>
                     <td className="p-5">
-                      <span className="font-mono font-bold text-gray-700">฿{court.price}</span>
+                      <span className="font-mono font-bold text-gray-700">
+                        ฿{court.price_per_hour}
+                      </span>
                     </td>
+
                     <td className="p-5 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
-                        court.status === 'available' 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-red-100 text-red-600'
+                        court.is_available
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-red-100 text-red-600'
                       }`}>
-                        {court.status === 'available' ? 'Available' : 'Maintenance'}
+                        {court.is_available ? 'Available' : 'Maintenance'}
                       </span>
                     </td>
                     <td className="p-5 text-right flex justify-end gap-3">
                       <button 
-                        onClick={() => toggleStatus(court.id)} 
+                        onClick={() => toggleStatus(court)} 
                         className="text-xs font-bold bg-blue-50 text-blue-600 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                       >
                         เปลี่ยนสถานะ
                       </button>
-                      <button className="text-xs font-bold bg-red-50 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                      <button
+                      onClick={() => deleteCourt(court.id)}
+                      className="text-xs font-bold bg-red-50 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
                         ลบ
                       </button>
                     </td>

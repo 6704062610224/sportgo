@@ -315,6 +315,97 @@ const HistoryPage = () => {
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // useEffect(() => {
+  //   const fetchHistory = async () => {
+  //     try {
+  //       const { data: { user } } = await supabase.auth.getUser();
+  //       if (!user) return;
+
+  //       const { data, error } = await supabase
+  //         .from('bookings')
+  //         .select(`
+  //           id,
+  //           total_price,
+  //           status,
+  //           booking_date,
+  //           courts ( name, category ),
+  //           booking_time_slots ( time_slot ),
+  //           booking_equipments ( quantity, equipments ( name ) )
+  //         `)
+  //         .eq('user_id', user.id)
+  //         .order('id', { ascending: false });
+
+  //       if (error) throw error;
+
+  //       // const formattedData = data.map(item => {
+  //       //   let uiStatus = 'pending';
+  //       //   let uiStatusText = 'รอตรวจสอบ';
+
+  //       //   if (item.status === 'paid') {
+  //       //     uiStatus = 'booked';
+  //       //     uiStatusText = 'จองสำเร็จ';
+  //       //   }
+  //       //   else if (item.status === 'rejected') {
+  //       //     uiStatus = 'cancelled';
+  //       //     uiStatusText = 'ถูกปฏิเสธ';
+  //       //   }
+  //       //   else if (item.status === 'cancelled') {
+  //       //     uiStatus = 'cancelled';
+  //       //     uiStatusText = 'ยกเลิกแล้ว';
+  //       //   }
+  //       //   else if (item.status === 'pending') {
+  //       //     uiStatus = 'pending';
+  //       //     uiStatusText = 'รอตรวจสอบสลิป';
+  //       //   }
+  //       const formattedData = data.map(item => {
+  //       let uiStatus = 'pending';
+  //       let uiStatusText = 'รอตรวจสอบสลิป';
+
+  //       const isBorrowOnly = !item.courts; // ไม่มีสนาม = ยืมอุปกรณ์
+
+  //       if (item.status === 'paid') {
+  //         if (isBorrowOnly) {
+  //           uiStatus = 'borrowed';
+  //           uiStatusText = 'ยืมสำเร็จ';
+  //         } else {
+  //           uiStatus = 'booked';
+  //           uiStatusText = 'จองสำเร็จ';
+  //         }
+  //       }
+  //       else if (item.status === 'rejected') {
+  //         uiStatus = 'cancelled';
+  //         uiStatusText = 'ถูกปฏิเสธ';
+  //       }
+  //       else if (item.status === 'cancelled') {
+  //         uiStatus = 'cancelled';
+  //         uiStatusText = 'ยกเลิกแล้ว';
+  //       }
+
+  //       const dateObj = new Date(item.booking_date);
+  //       const dateStr = dateObj.toLocaleDateString('th-TH', {
+  //         day: 'numeric',
+  //         month: 'short',
+  //         year: 'numeric'
+  //       });
+
+  //       const itemString = item.booking_equipments
+  //         ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
+  //         .join(', ') || "";
+
+  //       return {
+  //         id: item.id,
+  //         title: item.courts?.name || "ยืมอุปกรณ์",
+  //         type: item.courts?.category || "อุปกรณ์กีฬา",
+  //         date: dateStr,
+  //         bookingTimes: item.booking_time_slots?.map(slot => slot.time_slot) || [],
+  //         items: itemString,
+  //         price: `฿${item.total_price?.toLocaleString() || 0}`,
+  //         status: uiStatus,
+  //         statusText: uiStatusText,
+  //       };
+  //     });
+
+  //     setHistoryData(formattedData);
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -339,34 +430,50 @@ const HistoryPage = () => {
 
         const formattedData = data.map(item => {
           let uiStatus = 'pending';
-          let uiStatusText = 'รอตรวจสอบ';
+          let uiStatusText = 'รอตรวจสอบสลิป';
 
-          if (item.status === 'confirmed') {
-            uiStatus = 'booked';
-            uiStatusText = 'จองสำเร็จ';
+          const isBorrowOnly = !item.courts;
+
+          if (item.status === 'paid') {
+            if (isBorrowOnly) {
+              uiStatus = 'borrowed';
+              uiStatusText = 'ยืมสำเร็จ';
+            } else {
+              uiStatus = 'booked';
+              uiStatusText = 'จองสำเร็จ';
+            }
+          } 
+          else if (item.status === 'returned') {
+            uiStatus = 'returned';
+            uiStatusText = 'คืนอุปกรณ์แล้ว';
+          }
+          else if (item.status === 'rejected') {
+            uiStatus = 'cancelled';
+            uiStatusText = 'ถูกปฏิเสธ';
           } else if (item.status === 'cancelled') {
             uiStatus = 'cancelled';
             uiStatusText = 'ยกเลิกแล้ว';
-          } else if (item.status === 'waiting_verify' || item.status === 'pending') {
-            uiStatus = 'pending';
-            uiStatusText = 'รอตรวจสอบสลิป';
           }
+          
+          const dateStr = item.booking_date
+            ? new Date(item.booking_date).toLocaleDateString('th-TH', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              })
+            : '-';
 
-          const dateObj = new Date(item.booking_date);
-          const dateStr = dateObj.toLocaleDateString('th-TH', {
-            day: 'numeric', month: 'short', year: 'numeric'
-          });
-
-          const itemString = item.booking_equipments
-            ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
-            .join(', ') || "";
+          const itemString =
+            item.booking_equipments
+              ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
+              .join(', ') || "";
 
           return {
             id: item.id,
-            title: item.courts?.name || "ไม่ระบุชื่อสนาม",
-            type: item.courts?.category || "กีฬา",
+            title: item.courts?.name || "ยืมอุปกรณ์",
+            type: item.courts?.category || "อุปกรณ์กีฬา",
             date: dateStr,
-            bookingTimes: item.booking_time_slots?.map(slot => slot.time_slot) || [],
+            bookingTimes: item.booking_time_slots?.map(s => s.time_slot) || [],
             items: itemString,
             price: `฿${item.total_price?.toLocaleString() || 0}`,
             status: uiStatus,
@@ -408,7 +515,9 @@ const HistoryPage = () => {
           { id: 'all', label: 'ทั้งหมด', color: 'bg-gray-800' },
           { id: 'booked', label: 'จองสำเร็จ', color: 'bg-green-600' },
           { id: 'cancelled', label: 'ยกเลิกแล้ว', color: 'bg-red-500' },
-          { id: 'pending', label: 'รอชำระเงิน', color: 'bg-yellow-500' }
+          { id: 'pending', label: 'รอชำระเงิน', color: 'bg-yellow-500' },
+          { id: 'borrowed', label: 'ยืมสำเร็จ', color: 'bg-blue-600' },
+          { id: 'returned', label: 'คืนแล้ว', color: 'bg-blue-600' }
         ].map(tab => (
           <button 
             key={tab.id}
@@ -433,8 +542,15 @@ const HistoryPage = () => {
                 <p className="text-teal-600 font-bold text-sm uppercase tracking-wider">{item.type}</p>
               </div>
               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                item.status === 'booked' ? 'bg-green-50 text-green-600' : 
-                item.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-yellow-50 text-yellow-600'
+                item.status === 'booked'
+                  ? 'bg-green-50 text-green-600'
+                  : item.status === 'borrowed'
+                  ? 'bg-blue-50 text-blue-600'
+                  : item.status === 'returned'
+                  ? 'bg-blue-50 text-blue-600'
+                  : item.status === 'cancelled'
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-yellow-50 text-yellow-600'
               }`}>
                 {item.statusText}
               </span>
