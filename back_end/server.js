@@ -373,6 +373,7 @@ app.get('/api/booked-slots', async (req, res) => {
     res.json(data.map(item => item.time_slot)); 
   } catch (err) {
     res.status(500).json({ error: err.message });
+    return res.status(409).json({ message: "เวลานี้ถูกจองแล้ว" }); //เพิ่มใหม่
   }
 });
 

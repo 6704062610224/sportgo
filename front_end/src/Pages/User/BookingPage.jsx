@@ -773,6 +773,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from "../../supabaseClient";
 
 const BookingPage = () => {
   const navigate = useNavigate();
@@ -791,7 +792,7 @@ const BookingPage = () => {
       .then(res => res.json())
       .then(data => {
         const formatted = data
-        .filter(item => item.is_available) // ❗ เพิ่ม
+        .filter(item => item.is_available !== false) // ❗ เพิ่ม
         .map(item => ({
           id: item.id,
           name: item.name,
@@ -803,18 +804,50 @@ const BookingPage = () => {
       })
       .catch(err => console.error("Fetch error:", err));
   }, []);
-
+  
   // --- ส่วนที่เพิ่มใหม่: ดึงสถานะสนามว่างตามวันที่และสนามที่เลือก ---
   useEffect(() => {
-    if (selectedCourt) {
-      fetch(`http://localhost:8000/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`)
-        .then(res => res.json())
-        .then(data => {
-          setBookedTimes(data); // data คือ Array ของ time_slot ที่ไม่ว่าง
-          setSelectedTimes([]); // ล้างเวลาที่เคยเลือกไว้เมื่อเปลี่ยนวันที่หรือสนาม
-        })
-        .catch(err => console.error("Error fetching booked slots:", err));
-    }
+  //   if (selectedCourt) {
+  //     fetch(`http://localhost:8000/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`)
+  //       .then(res => res.json())
+  //       .then(data => {
+  //         setBookedTimes(data); // data คือ Array ของ time_slot ที่ไม่ว่าง
+  //         setSelectedTimes([]); // ล้างเวลาที่เคยเลือกไว้เมื่อเปลี่ยนวันที่หรือสนาม
+  //       })
+  //       .catch(err => console.error("Error fetching booked slots:", err));
+  //   }
+  // }, [selectedCourt, selectedDate]);
+    if (!selectedCourt) return;
+    
+    const fetchBookedSlots = async () => {
+        const res = await fetch(
+          `http://localhost:8000/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`
+        );
+        const data = await res.json();
+        setBookedTimes(data);
+        setSelectedTimes([]);
+      };
+
+      fetchBookedSlots(); // ✅ สำคัญมาก
+
+      const channel = supabase
+        .channel(`booking-slots-${selectedCourt.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'booking_time_slots'
+          },
+          () => {
+            fetchBookedSlots(); // realtime update
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
   }, [selectedCourt, selectedDate]);
 
   const timeSlots = [

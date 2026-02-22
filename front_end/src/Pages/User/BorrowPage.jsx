@@ -253,24 +253,101 @@ export default function BorrowPage() {
 
     return ranges.join(", "); // จะได้ผลลัพธ์เช่น "09:00 - 11:00, 14:00 - 15:00"
   };
-  useEffect(() => {
-    const fetchEquip = async () => {
-      let query = supabase.from('equipments').select('*');
-      if (filter !== "ทั้งหมด") {
-        query = query.eq('sport_type', filter.trim());
-      }
-      const { data, error } = await query;
-      if (error) return console.error(error);
-      setEquipments(data || []);
-    };
-    fetchEquip();
-  }, [filter]);
+  
+  // useEffect(() => {
+  //   const fetchEquip = async () => {
+  //     let query = supabase.from('equipments').select('*');
+  //     if (filter !== "ทั้งหมด") {
+  //       query = query.eq('sport_type', filter.trim());
+  //     }
+  //     const { data, error } = await query;
+  //     if (error) return console.error(error);
+  //     setEquipments(data || []);
+  //   };
+  //   fetchEquip();
+  // }, [filter]);
+  // useEffect(() => {
+  //   const channel = supabase
+  //     .channel('realtime-equipments')
+  //     .on(
+  //       'postgres_changes',
+  //       { event: '*', schema: 'public', table: 'equipments' },
+  //       (payload) => {
+  //         setEquipments(prev =>
+  //           prev.map(e =>
+  //             e.id === payload.new.id ? payload.new : e
+  //           )
+  //         );
+  //       }
+  //     )
+  //     .subscribe();
 
-  const updateQuantity = (id, delta) => {
-    setSelectedEquips(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta)
-    }));
+  //   return () => supabase.removeChannel(channel);
+  // }, []);
+  useEffect(() => {
+  const fetchEquip = async () => {
+    let query = supabase.from('equipments').select('*');
+    if (filter !== "ทั้งหมด") {
+      query = query.eq('sport_type', filter.trim());
+    }
+    const { data, error } = await query;
+    if (!error) setEquipments(data || []);
+  };
+
+  fetchEquip();
+
+  const channel = supabase
+    .channel('realtime-equipments')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'equipments' },
+      () => fetchEquip()
+    )
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [filter]);
+  // const updateQuantity = (id, delta) => {
+  //   setSelectedEquips(prev => ({
+  //     ...prev,
+  //     [id]: Math.max(0, (prev[id] || 0) + delta)
+  //   }));
+  // };
+  useEffect(() => {
+    setSelectedEquips(prev => {
+      const updated = { ...prev };
+
+      equipments.forEach(item => {
+        if (updated[item.id] > item.stock) {
+          if (item.stock === 0) {
+            delete updated[item.id];
+          } else {
+            updated[item.id] = item.stock;
+          }
+        }
+      });
+
+      return updated;
+    });
+  }, [equipments]);
+  const updateQuantity = (item, delta) => {
+    setSelectedEquips(prev => {
+      const currentQty = prev[item.id] || 0;
+      const newQty = currentQty + delta;
+
+      if (newQty < 0) return prev;
+
+      // ❗ เช็ก stock
+      if (newQty > item.stock) {
+        alert("อุปกรณ์ไม่เพียงพอ");
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [item.id]: newQty
+      };
+    });
   };
 
   // กรองรายการที่เลือกจริงเพื่อนำมาแสดงในแถบสรุป
@@ -310,9 +387,13 @@ export default function BorrowPage() {
                   <p className="text-teal-600 font-bold text-sm">฿{item.price_per_unit}</p>
                 </div>
                 <div className="flex items-center bg-gray-50 rounded-xl p-1 gap-3">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">－</button>
+                  {/* <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">－</button> */}
+                  <button onClick={() => updateQuantity(item, -1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">－</button>
+
                   <span className="w-4 text-center font-bold">{selectedEquips[item.id] || 0}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">＋</button>
+                  {/* <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">＋</button> */}
+                  <button onClick={() => updateQuantity(item, 1)} className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold">＋</button>
+
                 </div>
               </div>
             ))}

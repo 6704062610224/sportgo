@@ -406,91 +406,331 @@ const HistoryPage = () => {
   //     });
 
   //     setHistoryData(formattedData);
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  // useEffect(() => {
+  //   const fetchHistory = async () => {
+  //     try {
+  //       const { data: { user } } = await supabase.auth.getUser();
+  //       if (!user) return;
 
-        const { data, error } = await supabase
-          .from('bookings')
-          .select(`
-            id,
-            total_price,
-            status,
-            booking_date,
-            courts ( name, category ),
-            booking_time_slots ( time_slot ),
-            booking_equipments ( quantity, equipments ( name ) )
-          `)
-          .eq('user_id', user.id)
-          .order('id', { ascending: false });
+  //       const { data, error } = await supabase
+  //         .from('bookings')
+  //         .select(`
+  //           id,
+  //           total_price,
+  //           status,
+  //           booking_date,
+  //           courts ( name, category ),
+  //           booking_time_slots ( time_slot ),
+  //           booking_equipments ( quantity, equipments ( name ) )
+  //         `)
+  //         .eq('user_id', user.id)
+  //         .order('id', { ascending: false });
 
-        if (error) throw error;
+  //       if (error) throw error;
 
-        const formattedData = data.map(item => {
-          let uiStatus = 'pending';
-          let uiStatusText = 'รอตรวจสอบสลิป';
+  //       const formattedData = data.map(item => {
+  //         let uiStatus = 'pending';
+  //         let uiStatusText = 'รอตรวจสอบสลิป';
 
-          const isBorrowOnly = !item.courts;
+  //         const isBorrowOnly = !item.courts;
 
-          if (item.status === 'paid') {
-            if (isBorrowOnly) {
-              uiStatus = 'borrowed';
-              uiStatusText = 'ยืมสำเร็จ';
-            } else {
-              uiStatus = 'booked';
-              uiStatusText = 'จองสำเร็จ';
-            }
-          } 
-          else if (item.status === 'returned') {
-            uiStatus = 'returned';
-            uiStatusText = 'คืนอุปกรณ์แล้ว';
-          }
-          else if (item.status === 'rejected') {
-            uiStatus = 'cancelled';
-            uiStatusText = 'ถูกปฏิเสธ';
-          } else if (item.status === 'cancelled') {
-            uiStatus = 'cancelled';
-            uiStatusText = 'ยกเลิกแล้ว';
-          }
+  //         if (item.status === 'paid') {
+  //           if (isBorrowOnly) {
+  //             uiStatus = 'borrowed';
+  //             uiStatusText = 'ยืมสำเร็จ';
+  //           } else {
+  //             uiStatus = 'booked';
+  //             uiStatusText = 'จองสำเร็จ';
+  //           }
+  //         } 
+  //         else if (item.status === 'returned') {
+  //           uiStatus = 'returned';
+  //           uiStatusText = 'คืนอุปกรณ์แล้ว';
+  //         }
+  //         else if (item.status === 'rejected') {
+  //           uiStatus = 'cancelled';
+  //           uiStatusText = 'ถูกปฏิเสธ';
+  //         } else if (item.status === 'cancelled') {
+  //           uiStatus = 'cancelled';
+  //           uiStatusText = 'ยกเลิกแล้ว';
+  //         }
           
-          const dateStr = item.booking_date
-            ? new Date(item.booking_date).toLocaleDateString('th-TH', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              })
-            : '-';
+  //         const dateStr = item.booking_date
+  //           ? new Date(item.booking_date).toLocaleDateString('th-TH', {
+  //               day: 'numeric',
+  //               month: 'short',
+  //               year: 'numeric'
+  //             })
+  //           : '-';
 
-          const itemString =
-            item.booking_equipments
-              ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
-              .join(', ') || "";
+  //         const itemString =
+  //           item.booking_equipments
+  //             ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
+  //             .join(', ') || "";
 
-          return {
-            id: item.id,
-            title: item.courts?.name || "ยืมอุปกรณ์",
-            type: item.courts?.category || "อุปกรณ์กีฬา",
-            date: dateStr,
-            bookingTimes: item.booking_time_slots?.map(s => s.time_slot) || [],
-            items: itemString,
-            price: `฿${item.total_price?.toLocaleString() || 0}`,
-            status: uiStatus,
-            statusText: uiStatusText,
-          };
-        });
+  //         return {
+  //           id: item.id,
+  //           title: item.courts?.name || "ยืมอุปกรณ์",
+  //           type: item.courts?.category || "อุปกรณ์กีฬา",
+  //           date: dateStr,
+  //           bookingTimes: item.booking_time_slots?.map(s => s.time_slot) || [],
+  //           items: itemString,
+  //           price: `฿${item.total_price?.toLocaleString() || 0}`,
+  //           status: uiStatus,
+  //           statusText: uiStatusText,
+  //         };
+  //       });
 
-        setHistoryData(formattedData);
-      } catch (err) {
-        console.error("Error fetching history:", err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       setHistoryData(formattedData);
+  //     } catch (err) {
+  //       console.error("Error fetching history:", err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchHistory();
+  //   fetchHistory();
+  // }, []);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
   }, []);
+  // useEffect(() => {
+  //   let subscription; // สร้างตัวแปรไว้เก็บสถานะการติดตาม (Subscription)
+
+  //   // แยกฟังก์ชันดึงข้อมูลออกมา เพื่อให้เรียกซ้ำได้ตอน Real-time ทำงาน
+  //   const fetchHistory = async () => {
+  //     try {
+  //       const { data: { user } } = await supabase.auth.getUser();
+  //       if (!user) return;
+
+  //       const { data, error } = await supabase
+  //         .from('bookings')
+  //         .select(`
+  //           id,
+  //           total_price,
+  //           status,
+  //           booking_date,
+  //           courts ( name, category ),
+  //           booking_time_slots ( time_slot ),
+  //           booking_equipments ( quantity, equipments ( name ) )
+  //         `)
+  //         .eq('user_id', user.id)
+  //         .order('id', { ascending: false });
+
+  //       if (error) throw error;
+
+  //       const formattedData = data.map(item => {
+  //         let uiStatus = 'pending';
+  //         let uiStatusText = 'รอตรวจสอบสลิป';
+
+  //         const isBorrowOnly = !item.courts;
+
+  //         if (item.status === 'paid') {
+  //           if (isBorrowOnly) {
+  //             uiStatus = 'borrowed';
+  //             uiStatusText = 'ยืมสำเร็จ';
+  //           } else {
+  //             uiStatus = 'booked';
+  //             uiStatusText = 'จองสำเร็จ';
+  //           }
+  //         } 
+  //         else if (item.status === 'returned') {
+  //           uiStatus = 'returned';
+  //           uiStatusText = 'คืนอุปกรณ์แล้ว';
+  //         }
+  //         else if (item.status === 'rejected') {
+  //           uiStatus = 'cancelled';
+  //           uiStatusText = 'ถูกปฏิเสธ';
+  //         } else if (item.status === 'cancelled') {
+  //           uiStatus = 'cancelled';
+  //           uiStatusText = 'ยกเลิกแล้ว';
+  //         }
+          
+  //         const dateStr = item.booking_date
+  //           ? new Date(item.booking_date).toLocaleDateString('th-TH', {
+  //               day: 'numeric',
+  //               month: 'short',
+  //               year: 'numeric'
+  //             })
+  //           : '-';
+
+  //         const itemString =
+  //           item.booking_equipments
+  //             ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
+  //             .join(', ') || "";
+
+  //         return {
+  //           id: item.id,
+  //           title: item.courts?.name || "ยืมอุปกรณ์",
+  //           type: item.courts?.category || "อุปกรณ์กีฬา",
+  //           date: dateStr,
+  //           bookingTimes: item.booking_time_slots?.map(s => s.time_slot) || [],
+  //           items: itemString,
+  //           price: `฿${item.total_price?.toLocaleString() || 0}`,
+  //           status: uiStatus,
+  //           statusText: uiStatusText,
+  //         };
+  //       });
+
+  //       setHistoryData(formattedData);
+  //     } catch (err) {
+  //       console.error("Error fetching history:", err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   // 1. เรียกดึงข้อมูลครั้งแรกตอนเปิดหน้าเว็บ
+  //   fetchHistory();
+
+  //   // 2. 🚀 เปิดโหมด Real-time ติดตามการเปลี่ยนแปลงในตาราง 'bookings'
+  //   // subscription = supabase
+  //   //   .channel('public:bookings') // ตั้งชื่อช่องสัญญาณ
+  //   //   .on(
+  //   //     'postgres_changes',
+  //   //     { event: '*', schema: 'public', table: 'bookings' }, // ดักจับทุก Event (Insert, Update, Delete)
+  //   //     (payload) => {
+  //   //       console.log('Real-time Update:', payload);
+  //   //       // เมื่อแอดมินกดอนุมัติ หรือมีการจองใหม่ ให้โหลดข้อมูลใหม่ทันที
+  //   //       fetchHistory(); 
+  //   //     }
+  //   //   )
+  //   //   .subscribe();
+  //   subscription = supabase
+  //     .channel('user-bookings-realtime')
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: 'UPDATE',
+  //         schema: 'public',
+  //         table: 'bookings',
+  //         filter: `user_id=eq.${user.id}`,
+  //       },
+  //       (payload) => {
+  //         console.log('Realtime payload:', payload);
+
+  //         // ✅ ใช้ payload ได้ตรงนี้
+  //         if (payload.new.status === 'paid') {
+  //           alert('🎉 ชำระเงินสำเร็จแล้ว');
+  //         }
+
+  //         if (payload.new.status === 'rejected') {
+  //           alert('❌ การจองถูกปฏิเสธ');
+  //         }
+
+  //         fetchHistory();
+  //       }
+  //     )
+  //   .subscribe();
+  //   // 3. ปิดการเชื่อมต่อเมื่อผู้ใช้ออกจากหน้านี้ (Cleanup)
+  //   return () => {
+  //     if (subscription) {
+  //       supabase.removeChannel(subscription);
+  //     }
+  //   };
+  // }, []);
+  useEffect(() => {
+  if (!user) return; // ⛔ รอจนกว่าจะมี user
+
+  let subscription;
+
+  const fetchHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          total_price,
+          status,
+          booking_date,
+          courts ( name, category ),
+          booking_time_slots ( time_slot ),
+          booking_equipments ( quantity, equipments ( name ) )
+        `)
+        .eq('user_id', user.id)
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedData = data.map(item => {
+        let uiStatus = 'pending';
+        let uiStatusText = 'รอตรวจสอบสลิป';
+
+        const isBorrowOnly = !item.courts;
+
+        if (item.status === 'paid') {
+          uiStatus = isBorrowOnly ? 'borrowed' : 'booked';
+          uiStatusText = isBorrowOnly ? 'ยืมสำเร็จ' : 'จองสำเร็จ';
+        } else if (item.status === 'returned') {
+          uiStatus = 'returned';
+          uiStatusText = 'คืนอุปกรณ์แล้ว';
+        } else if (item.status === 'rejected') {
+          uiStatus = 'cancelled';
+          uiStatusText = 'ถูกปฏิเสธ';
+        }
+
+        return {
+          id: item.id,
+          title: item.courts?.name || 'ยืมอุปกรณ์',
+          type: item.courts?.category || 'อุปกรณ์กีฬา',
+          date: item.booking_date
+            ? new Date(item.booking_date).toLocaleDateString('th-TH')
+            : '-',
+          bookingTimes: item.booking_time_slots?.map(s => s.time_slot) || [],
+          items: item.booking_equipments
+            ?.map(eq => `${eq.equipments?.name} x${eq.quantity}`)
+            .join(', ') || '',
+          price: `฿${item.total_price?.toLocaleString() || 0}`,
+          status: uiStatus,
+          statusText: uiStatusText,
+        };
+      });
+
+      setHistoryData(formattedData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // โหลดครั้งแรก
+  fetchHistory();
+
+  // realtime
+  subscription = supabase
+    .channel(`user-bookings-${user.id}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'bookings',
+        filter: `user_id=eq.${user.id}`,
+      },
+      (payload) => {
+        console.log('Realtime:', payload);
+
+        if (payload.new.status === 'paid') {
+          alert('🎉 ชำระเงินสำเร็จแล้ว');
+        }
+
+        if (payload.new.status === 'rejected') {
+          alert('❌ การจองถูกปฏิเสธ');
+        }
+
+        fetchHistory();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(subscription);
+  };
+}, [user]);
 
   const formatTimeDisplay = (times) => {
     if (!times || times.length === 0) return "ไม่ได้ระบุเวลา";
