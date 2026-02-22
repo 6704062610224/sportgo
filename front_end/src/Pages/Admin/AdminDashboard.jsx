@@ -426,6 +426,40 @@ const [stats, setStats] = useState({
 
 //   fetchStats();
 // }, []);
+// const fetchStats = async () => {
+//   const today = new Date().toISOString().slice(0, 10);
+
+//   const { count: waiting } = await supabase
+//     .from("bookings")
+//     .select("*", { count: "exact", head: true })
+//     .eq("status", "pending");
+
+//   const { count: totalBookings } = await supabase
+//     .from("bookings")
+//     .select("*", { count: "exact", head: true });
+
+//   // ❗ ยังไม่แก้ revenue ตรงนี้ (ดูข้อ 2)
+//   const { data: revenueData } = await supabase
+//     .from("bookings")
+//     .select("total_price")
+//     .eq("status", "paid")
+//     .eq("booking_date", today);
+
+//   const todayRevenue =
+//     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
+
+//   const { data: courtsData } = await supabase
+//     .from("bookings")
+//     .select("court_id")
+//     .eq("booking_date", today);
+
+//   setStats({
+//     waiting: waiting ?? 0,
+//     totalBookings: totalBookings ?? 0,
+//     todayRevenue,
+//     bookedCourts: new Set(courtsData?.map(c => c.court_id)).size
+//   });
+// };
 const fetchStats = async () => {
   const today = new Date().toISOString().slice(0, 10);
 
@@ -438,12 +472,14 @@ const fetchStats = async () => {
     .from("bookings")
     .select("*", { count: "exact", head: true });
 
-  // ❗ ยังไม่แก้ revenue ตรงนี้ (ดูข้อ 2)
-  const { data: revenueData } = await supabase
+  // ✅ รายได้วันนี้ = paid + returned
+  const { data: revenueData, error } = await supabase
     .from("bookings")
     .select("total_price")
-    .eq("status", "paid")
+    .in("status", ["paid", "returned"])
     .eq("booking_date", today);
+
+  if (error) console.error(error);
 
   const todayRevenue =
     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
