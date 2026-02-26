@@ -41,6 +41,7 @@ const ManageBorrowPage = () => {
       fetchData();
     }
   };
+  
   return (
   <div className="p-6">
     <h1 className="text-2xl font-bold mb-6">รายการยืมอุปกรณ์</h1>
@@ -56,13 +57,14 @@ const ManageBorrowPage = () => {
       </div> */}
       <div
         className="grid bg-blue-500 text-white text-sm font-semibold px-6 py-3"
-        style={{ gridTemplateColumns: "2fr 2fr 1.5fr 1.5fr 1fr" }}
+        style={{ gridTemplateColumns: "2fr 2fr 2fr 2fr 2fr 1fr" }}
       >
         <div>Customer</div>
         <div>Borrowed Date</div>
+        <div>Equipment</div>
         <div>Items</div>
         <div>Status</div>
-        <div className="text-right">Action</div>
+        <div className="text-center">Action</div>
       </div>
 
       {/* Rows */}
@@ -76,7 +78,9 @@ const ManageBorrowPage = () => {
           (sum, e) => sum + e.quantity,
           0
         );
-
+        const equipmentNames = b.booking_equipments
+          .map(e => e.equipments?.name)
+          .join(", ");
         return (
           // <div
           //   key={b.id}
@@ -114,14 +118,19 @@ const ManageBorrowPage = () => {
           // </div>
           <div
             key={b.id}
-            className="grid items-center px-6 py-4  text-sm rounded-lg shadow-sm "
-            style={{ gridTemplateColumns: "2fr 2fr 1.5fr 1.5fr 1fr" }}
+            className="grid items-center px-6 py-4 text-sm rounded-lg shadow-sm bg-white"
+            style={{ gridTemplateColumns: "2fr 2fr 2fr 2fr 2fr 1fr" }}
           >
             {/* Customer */}
             <div>{b.users?.username}</div>
 
             {/* Borrowed Date */}
             <div>{borrowedDate.toLocaleDateString("en-GB")}</div>
+
+            {/* Equipment */}
+            <div className="text-gray-600 text-xs">
+              {equipmentNames || "-"}
+            </div>
 
             {/* Items */}
             <div>{totalItems} items</div>
@@ -136,7 +145,7 @@ const ManageBorrowPage = () => {
             </div>
 
             {/* Action */}
-            <div className="text-right">
+            <div className="flex justify-center items-center">
               <button
                 onClick={() => handleReturn(b.id)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-xs font-semibold"

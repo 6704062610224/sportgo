@@ -1,234 +1,3 @@
-// import React, { useState } from 'react';
-// import { Link } from 'react-router-dom';
-// const AdminDashboard = () => {
-//   // ข้อมูลจำลองที่ดึงมาจากตาราง Bookings และ Users
-//   const [pendingBookings, setPendingBookings] = useState([
-//     { id: 101, user: "คุณสมชาย", court: "สนามฟุตบอล 1", amount: 500, time: "17:00 - 18:00", slip: "https://via.placeholder.com/150", date: "28 ม.ค. 2026" },
-//     { id: 102, user: "คุณสมหญิง", court: "ปิงปอง 1", amount: 100, time: "13:00 - 14:00", slip: "https://via.placeholder.com/150", date: "28 ม.ค. 2026" },
-//   ]);
-
-//   const handleApprove = (id) => {
-//     alert(`อนุมัติรายการจองที่ #${id} สำเร็จ! ระบบจะเปลี่ยนสถานะเป็น booked`);
-//     setPendingBookings(pendingBookings.filter(b => b.id !== id));
-//   };
-
-//   return (
-//     <div className="flex min-h-screen bg-gray-100">
-//       {/* Sidebar */}
-//       <div className="w-64 bg-gray-900 text-white p-6 hidden md:block">
-//         <h2 className="text-2xl font-bold mb-8 text-teal-400">Admin Panel</h2>
-//         {/* <nav className="space-y-4">
-//           <div className="text-gray-400 text-xs uppercase font-bold">Main</div>
-//           <a href="#" className="block py-2 px-4 bg-teal-600 rounded-lg">Dashboard</a>
-//           <a href="/admin/courts" className="block py-2 px-4 hover:bg-gray-800 transition">จัดการสนาม</a>
-//           <a href="#" className="block py-2 px-4 hover:bg-gray-800 transition">สต็อกอุปกรณ์</a>
-//           <div className="pt-4 text-gray-400 text-xs uppercase font-bold">Account</div>
-//           <a href="#" className="block py-2 px-4 hover:bg-red-900 text-red-400 transition">Logout</a>
-//         </nav> */}
-//         <nav className="space-y-4">
-//             <div className="text-gray-400 text-xs uppercase font-bold">Main</div>
-//             <Link to="/admin" className="block py-2 px-4 hover:bg-gray-800 rounded-lg transition">
-//                 Dashboard
-//             </Link>
-//             <Link to="/admin/courts" className="block py-2 px-4 hover:bg-gray-800 rounded-lg transition">
-//                 จัดการสนาม
-//             </Link>
-//             <a href="#" className="block py-2 px-4 hover:bg-gray-800 transition">สต็อกอุปกรณ์</a>
-//         </nav>
-//       </div>
-
-//       {/* Main Content */}
-//       <div className="flex-1 p-8">
-//         <header className="flex justify-between items-center mb-8">
-//           <h1 className="text-3xl font-bold text-gray-800">ตรวจสอบการจอง</h1>
-//           <div className="bg-white px-4 py-2 rounded-xl shadow-sm border font-medium">
-//             Admin: Worawit 👑
-//           </div>
-//         </header>
-
-//         {/* Stats */}
-//         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-400">
-//             <p className="text-gray-500 text-sm">รอตรวจสลิป</p>
-//             <p className="text-3xl font-bold">{pendingBookings.length} รายการ</p>
-//           </div>
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-//             <p className="text-gray-500 text-sm">รายได้วันนี้</p>
-//             <p className="text-3xl font-bold">฿1,250</p>
-//           </div>
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-teal-500">
-//             <p className="text-gray-500 text-sm">สนามที่ถูกจอง</p>
-//             <p className="text-3xl font-bold">8 สนาม</p>
-//           </div>
-//         </div>
-
-//         {/* Pending Table */}
-//         <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-//           <table className="w-full text-left">
-//             <thead className="bg-gray-50 border-b">
-//               <tr>
-//                 <th className="p-4 font-bold text-gray-600">ผู้จอง</th>
-//                 <th className="p-4 font-bold text-gray-600">สนาม/เวลา</th>
-//                 <th className="p-4 font-bold text-gray-600">ยอดเงิน</th>
-//                 <th className="p-4 font-bold text-gray-600">สลิป</th>
-//                 <th className="p-4 font-bold text-gray-600 text-center">จัดการ</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {pendingBookings.map((b) => (
-//                 <tr key={b.id} className="border-b last:border-0 hover:bg-gray-50 transition">
-//                   <td className="p-4 font-medium">{b.user}</td>
-//                   <td className="p-4">
-//                     <p className="font-bold">{b.court}</p>
-//                     <p className="text-xs text-gray-400">{b.date} | {b.time}</p>
-//                   </td>
-//                   <td className="p-4 font-bold text-teal-600">฿{b.amount}</td>
-//                   <td className="p-4">
-//                     <button className="text-teal-500 underline text-sm font-bold hover:text-teal-700">ดูสลิป</button>
-//                   </td>
-//                   <td className="p-4 flex justify-center gap-2">
-//                     <button 
-//                       onClick={() => handleApprove(b.id)}
-//                       className="bg-green-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-600 transition"
-//                     >
-//                       อนุมัติ
-//                     </button>
-//                     <button className="bg-red-50 text-red-500 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">
-//                       ปฏิเสธ
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//           {pendingBookings.length === 0 && (
-//             <div className="p-20 text-center text-gray-400">ไม่มีสลิปที่รอการตรวจสอบในขณะนี้</div>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AdminDashboard;
-
-
-
-
-
-
-// import React, { useState } from 'react';
-// import { Link } from 'react-router-dom';
-// const AdminDashboard = () => {
-//   // ข้อมูลจำลองที่ดึงมาจากตาราง Bookings และ Users
-//   const [pendingBookings, setPendingBookings] = useState([
-//     { id: 101, user: "คุณสมชาย", court: "สนามฟุตบอล 1", amount: 500, time: "17:00 - 18:00", slip: "https://via.placeholder.com/150", date: "28 ม.ค. 2026" },
-//     { id: 102, user: "คุณสมหญิง", court: "ปิงปอง 1", amount: 100, time: "13:00 - 14:00", slip: "https://via.placeholder.com/150", date: "28 ม.ค. 2026" },
-//   ]);
-
-//   const handleApprove = (id) => {
-//     alert(`อนุมัติรายการจองที่ #${id} สำเร็จ! ระบบจะเปลี่ยนสถานะเป็น booked`);
-//     setPendingBookings(pendingBookings.filter(b => b.id !== id));
-//   };
-
-//   return (
-//     <div className="flex min-h-screen bg-gray-100">
-//       {/* Sidebar */}
-//       <aside className="w-64 bg-gray-900 text-white p-6 hidden md:flex flex-col sticky top-0 h-screen">
-//         <h2 className="text-2xl font-bold mb-8 text-teal-400">Admin Panel</h2>
-//         <nav className="space-y-2 flex-grow">
-//           <p className="text-gray-500 text-xs uppercase font-bold mb-2 px-4">Main Menu</p>
-//           <Link to="/admin" className="block py-2.5 px-4 bg-teal-600 text-white rounded-xl shadow-lg transition-all">
-//             📊 Dashboard
-//           </Link>
-//           <Link to="/admin/courts" className="block py-2.5 px-4 hover:bg-gray-800 rounded-xl transition-all text-gray-400">
-//             🏟️ จัดการสนาม
-//           </Link>
-//           <Link to="#" className="block py-2.5 px-4 hover:bg-gray-800 rounded-xl transition-all text-gray-400">
-//             📦 สต็อกอุปกรณ์
-//           </Link>
-//         </nav>
-//         <div className="border-t border-gray-800 pt-4">
-//           <Link to="/" className="block py-2.5 px-4 text-red-400 hover:bg-red-900/20 rounded-xl transition-all font-bold">
-//             🚪 Logout
-//           </Link>
-//         </div>
-//       </aside>
-
-//       {/* Main Content */}
-//       <div className="flex-1 p-8">
-//         <header className="flex justify-between items-center mb-8">
-//           <h1 className="text-3xl font-bold text-gray-800">ตรวจสอบการจอง</h1>
-//           <div className="bg-white px-4 py-2 rounded-xl shadow-sm border font-medium">
-//             Admin: Worawit 👑
-//           </div>
-//         </header>
-
-//         {/* Stats */}
-//         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-400">
-//             <p className="text-gray-500 text-sm">รอตรวจสลิป</p>
-//             <p className="text-3xl font-bold">{pendingBookings.length} รายการ</p>
-//           </div>
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-//             <p className="text-gray-500 text-sm">รายได้วันนี้</p>
-//             <p className="text-3xl font-bold">฿1,250</p>
-//           </div>
-//           <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-teal-500">
-//             <p className="text-gray-500 text-sm">สนามที่ถูกจอง</p>
-//             <p className="text-3xl font-bold">8 สนาม</p>
-//           </div>
-//         </div>
-
-//         {/* Pending Table */}
-//         <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-//           <table className="w-full text-left">
-//             <thead className="bg-gray-50 border-b">
-//               <tr>
-//                 <th className="p-4 font-bold text-gray-600">ผู้จอง</th>
-//                 <th className="p-4 font-bold text-gray-600">สนาม/เวลา</th>
-//                 <th className="p-4 font-bold text-gray-600">ยอดเงิน</th>
-//                 <th className="p-4 font-bold text-gray-600">สลิป</th>
-//                 <th className="p-4 font-bold text-gray-600 text-center">จัดการ</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {pendingBookings.map((b) => (
-//                 <tr key={b.id} className="border-b last:border-0 hover:bg-gray-50 transition">
-//                   <td className="p-4 font-medium">{b.user}</td>
-//                   <td className="p-4">
-//                     <p className="font-bold">{b.court}</p>
-//                     <p className="text-xs text-gray-400">{b.date} | {b.time}</p>
-//                   </td>
-//                   <td className="p-4 font-bold text-teal-600">฿{b.amount}</td>
-//                   <td className="p-4">
-//                     <button className="text-teal-500 underline text-sm font-bold hover:text-teal-700">ดูสลิป</button>
-//                   </td>
-//                   <td className="p-4 flex justify-center gap-2">
-//                     <button 
-//                       onClick={() => handleApprove(b.id)}
-//                       className="bg-green-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-600 transition"
-//                     >
-//                       อนุมัติ
-//                     </button>
-//                     <button className="bg-red-50 text-red-500 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">
-//                       ปฏิเสธ
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//           {pendingBookings.length === 0 && (
-//             <div className="p-20 text-center text-gray-400">ไม่มีสลิปที่รอการตรวจสอบในขณะนี้</div>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AdminDashboard;
 
 
 
@@ -236,7 +5,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-
+import toast from "react-hot-toast";
 const AdminDashboard = () => {
   const [pendingBookings, setPendingBookings] = useState([]);
   const fetchBookings = async () => {
@@ -250,24 +19,54 @@ const AdminDashboard = () => {
       receipt_url,
       status,
       users ( username, email ),
-      courts ( name, category )
+      courts ( name, category ),
+      booking_equipments (
+        quantity,
+        equipments ( name )
+      )
     `)
     .gte("booking_date", `${today}T00:00:00`) // ✅ วันนี้ + อนาคต
     .order("booking_date", { ascending: true });
 
   if (!error && data) {
+    // setPendingBookings(
+    //   data.map(b => ({
+    //     id: b.id,
+    //     user: b.users?.username ?? "-",
+    //     email: b.users?.email ?? "-",
+    //     type: b.courts?.category ?? "-",
+    //     court: b.courts?.name ?? "-",
+    //     time: b.booking_date,
+    //     receipt_url: b.receipt_url,
+    //     status: b.status
+    //   }))
+    // );
     setPendingBookings(
-      data.map(b => ({
-        id: b.id,
-        user: b.users?.username ?? "-",
-        email: b.users?.email ?? "-",
-        type: b.courts?.category ?? "-",
-        court: b.courts?.name ?? "-",
-        time: b.booking_date,
-        receipt_url: b.receipt_url,
-        status: b.status
-      }))
-    );
+  data.map(b => {
+    const equipmentNames =
+      b.booking_equipments && b.booking_equipments.length > 0
+        ? b.booking_equipments
+            .map(e => `${e.equipments?.name} x${e.quantity}`)
+            .join(", ")
+        : null;
+
+    return {
+      id: b.id,
+      user: b.users?.username ?? "-",
+      email: b.users?.email ?? "-",
+
+      // ⭐ ตรงนี้
+      type: b.courts
+        ? b.courts.category
+        : equipmentNames || "Borrow equipment",
+
+      court: b.courts?.name ?? "-",
+      time: b.booking_date,
+      receipt_url: b.receipt_url,
+      status: b.status
+    };
+  })
+);
   }
 };
 const navigate = useNavigate();
@@ -282,51 +81,6 @@ const [stats, setStats] = useState({
   todayRevenue: 0,
   bookedCourts: 0
 });
-// useEffect(() => {
-//   const fetchStats = async () => {
-//     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-
-//     // 1. รอตรวจการชำระเงิน
-//     const { count: waiting } = await supabase
-//       .from("bookings")
-//       .select("*", { count: "exact", head: true })
-//       .eq("status", "pending");
-
-//     // 2. จำนวนคนจอง (ทั้งหมด)
-//     const { count: totalBookings } = await supabase
-//       .from("bookings")
-//       .select("*", { count: "exact", head: true });
-
-//     // 3. รายได้วันนี้ (เฉพาะที่ paid)
-//     const { data: revenueData } = await supabase
-//       .from("bookings")
-//       .select("total_price")
-//       .eq("status", "paid")
-//       .eq("booking_date", today);
-
-//     const todayRevenue =
-//       revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
-
-//     // 4. สนามที่ถูกจองวันนี้ (distinct court_id)
-//     const { data: courtsData } = await supabase
-//       .from("bookings")
-//       .select("court_id")
-//       .eq("booking_date", today);
-
-//     const bookedCourts = new Set(
-//       courtsData?.map(c => c.court_id)
-//     ).size;
-
-//     setStats({
-//       waiting: waiting ?? 0,
-//       totalBookings: totalBookings ?? 0,
-//       todayRevenue,
-//       bookedCourts
-//     });
-//   };
-
-//   fetchStats();
-// }, []);
 // const fetchStats = async () => {
 //   const today = new Date().toISOString().slice(0, 10);
 
@@ -339,12 +93,14 @@ const [stats, setStats] = useState({
 //     .from("bookings")
 //     .select("*", { count: "exact", head: true });
 
-//   // ❗ ยังไม่แก้ revenue ตรงนี้ (ดูข้อ 2)
-//   const { data: revenueData } = await supabase
+//   // ✅ รายได้วันนี้ = paid + returned
+//   const { data: revenueData, error } = await supabase
 //     .from("bookings")
 //     .select("total_price")
-//     .eq("status", "paid")
+//     .in("status", ["paid", "returned"])
 //     .eq("booking_date", today);
+
+//   if (error) console.error(error);
 
 //   const todayRevenue =
 //     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
@@ -352,7 +108,9 @@ const [stats, setStats] = useState({
 //   const { data: courtsData } = await supabase
 //     .from("bookings")
 //     .select("court_id")
-//     .eq("booking_date", today);
+//     .eq("booking_date", today)
+//     .not("court_id", "is", null)
+//     .in("status", ["paid", "returned"]);
 
 //   setStats({
 //     waiting: waiting ?? 0,
@@ -364,23 +122,21 @@ const [stats, setStats] = useState({
 const fetchStats = async () => {
   const today = new Date().toISOString().slice(0, 10);
 
+  // ✅ รอตรวจการชำระเงินจริง
   const { count: waiting } = await supabase
     .from("bookings")
     .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
-
+    .in("status", ["pending", "waiting_verify"])
+    .gte("booking_date", `${today}T00:00:00`); 
   const { count: totalBookings } = await supabase
     .from("bookings")
     .select("*", { count: "exact", head: true });
 
-  // ✅ รายได้วันนี้ = paid + returned
-  const { data: revenueData, error } = await supabase
+  const { data: revenueData } = await supabase
     .from("bookings")
     .select("total_price")
     .in("status", ["paid", "returned"])
     .eq("booking_date", today);
-
-  if (error) console.error(error);
 
   const todayRevenue =
     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
@@ -404,6 +160,21 @@ useEffect(() => {
   fetchBookings();
   fetchStats(); // ⭐ โหลดครั้งแรก
 
+  // const channel = supabase
+  //   .channel("admin-bookings-realtime")
+  //   .on(
+  //     "postgres_changes",
+  //     {
+  //       event: "*",
+  //       schema: "public",
+  //       table: "bookings"
+  //     },
+  //     () => {
+  //       fetchBookings();
+  //       fetchStats(); // ⭐ สำคัญมาก
+  //     }
+  //   )
+  //   .subscribe();
   const channel = supabase
     .channel("admin-bookings-realtime")
     .on(
@@ -413,53 +184,30 @@ useEffect(() => {
         schema: "public",
         table: "bookings"
       },
-      () => {
+      (payload) => {
+        // console.log("NEW BOOKING:", payload);
+        // toast.success("📌 มีรายการจองใหม่เข้ามา");
+        // if (payload.new?.status === "pending") {
+        //   toast.success("📌 มีรายการจองใหม่เข้ามา");
+        // }
+        if (
+          payload.eventType === "INSERT" &&
+          payload.new?.status === "pending"
+        ) {
+          toast.success("📌 มีรายการจองใหม่เข้ามา");
+        }
         fetchBookings();
-        fetchStats(); // ⭐ สำคัญมาก
+        fetchStats();
       }
     )
+    // .subscribe((status) => {
+    //   console.log("SUBSCRIBE STATUS:", status);
+    // });
     .subscribe();
-
   return () => {
     supabase.removeChannel(channel);
   };
 }, []);
-// const updateBookingStatus = async (bookingId, newStatus) => {
-//   const { error } = await supabase
-//     .from("bookings")
-//     .update({ status: newStatus })
-//     .eq("id", bookingId);
-
-//   if (!error) {
-//     setPendingBookings(prev =>
-//       prev.map(b =>
-//         b.id === bookingId ? { ...b, status: newStatus } : b
-//       )
-//     );
-//   } else {
-//     console.error(error);
-//     alert("อัปเดตสถานะไม่สำเร็จ");
-//   }
-// };
-// const updateBookingStatus = async (bookingId, newStatus) => {
-//   const updateData =
-//     newStatus === "paid"
-//       ? { status: "paid", paid_at: new Date().toISOString() }
-//       : { status: newStatus };
-
-//   const { error } = await supabase
-//     .from("bookings")
-//     .update(updateData)
-//     .eq("id", bookingId);
-
-//   if (!error) {
-//     setPendingBookings(prev =>
-//       prev.map(b =>
-//         b.id === bookingId ? { ...b, status: newStatus } : b
-//       )
-//     );
-//   }
-// };
 const updateBookingStatus = async (bookingId, newStatus) => {
   const { error } = await supabase
     .from("bookings")
@@ -531,7 +279,8 @@ const updateBookingStatus = async (bookingId, newStatus) => {
                 <th className="p-4 uppercase">Time</th>
                 <th className="p-4 uppercase">Receipt</th>
                 <th className="p-4 uppercase">Payment status</th>
-                <th className="p-4"></th>
+                <th className="p-4 uppercase text-center">Action</th>
+                
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -577,42 +326,78 @@ const updateBookingStatus = async (bookingId, newStatus) => {
                         {b.status}
                     </span>
                   </td>
-                  <td className="p-4">
-  {b.status === "pending" && (
-    <div className="flex gap-2">
-      <button
-        onClick={() => updateBookingStatus(b.id, "paid")}
-        className="px-3 py-1 text-[10px] font-bold bg-green-100 text-green-600 rounded"
-      >
-        Approve
-      </button>
-      <button
-        onClick={() => updateBookingStatus(b.id, "rejected")}
-        className="px-3 py-1 text-[10px] font-bold bg-red-100 text-red-600 rounded"
-      >
-        Reject
-      </button>
-    </div>
-  )}
+                  {/* <td className="p-4">
+                    {b.status === "pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => updateBookingStatus(b.id, "paid")}
+                          className="px-3 py-1 text-[10px] font-bold bg-green-100 text-green-600 rounded"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => updateBookingStatus(b.id, "rejected")}
+                          className="px-3 py-1 text-[10px] font-bold bg-red-100 text-red-600 rounded"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
 
-  {b.status === "paid" && (
-    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-600">
-      Approved
-    </span>
-  )}
+                    {b.status === "paid" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-600">
+                        Approved
+                      </span>
+                    )}
 
-  {b.status === "rejected" && (
-    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-600">
-      Rejected
-    </span>
-  )}
+                    {b.status === "rejected" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-600">
+                        Rejected
+                      </span>
+                    )}
 
-  {b.status === "cancelled" && (
-    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
-      Cancelled
-    </span>
-  )}
-</td>
+                    {b.status === "cancelled" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
+                        Cancelled
+                      </span>
+                    )}
+                  </td> */}
+                  <td className="p-4 text-center">
+                    {b.status === "pending" && (
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => updateBookingStatus(b.id, "paid")}
+                          className="px-3 py-1 text-[10px] font-bold bg-green-100 text-green-600 rounded"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => updateBookingStatus(b.id, "rejected")}
+                          className="px-3 py-1 text-[10px] font-bold bg-red-100 text-red-600 rounded"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+
+                    {b.status === "paid" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-600">
+                        Approved
+                      </span>
+                    )}
+
+                    {b.status === "rejected" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-600">
+                        Rejected
+                      </span>
+                    )}
+
+                    {b.status === "cancelled" && (
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
+                        Cancelled
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 text-gray-300 font-bold">•••</td>
                 </tr>
               ))}

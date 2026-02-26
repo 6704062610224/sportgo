@@ -3,7 +3,7 @@ import { supabase } from "../../supabaseClient";
 
 const AdminBookingHistory = () => {
   const [history, setHistory] = useState([]);
-
+  const [filter, setFilter] = useState("all"); 
   useEffect(() => {
     const fetchHistory = async () => {
       const today = new Date().toISOString().slice(0, 10);
@@ -16,7 +16,11 @@ const AdminBookingHistory = () => {
           receipt_url,
           status,
           users ( username, email ),
-          courts ( name, category )
+          courts ( name, category ),
+          booking_equipments (
+            quantity,
+            equipments ( name )
+          )
         `)
         .lt("booking_date", `${today}T00:00:00`) // ✅ อดีต
         .order("booking_date", { ascending: false });
@@ -55,14 +59,53 @@ const AdminBookingHistory = () => {
   //     </table>
   //   </div>
   // );
+  const filteredHistory = history.filter(b => {
+    if (filter === "all") return true;
+    if (filter === "court") return b.courts !== null;
+    if (filter === "equipment") return b.courts === null;
+    return true;
+  });
   return (
   <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
     <h1 className="text-3xl font-black text-gray-900 mb-8">
       ประวัติการจอง (Admin)
     </h1>
+    <div className="flex gap-3 mb-8">
+      <button
+        onClick={() => setFilter("all")}
+        className={`px-5 py-2 rounded-full font-bold text-sm ${
+          filter === "all"
+            ? "bg-teal-600 text-white"
+            : "bg-white shadow-sm text-gray-500"
+        }`}
+      >
+        ทั้งหมด
+      </button>
 
+      <button
+        onClick={() => setFilter("court")}
+        className={`px-5 py-2 rounded-full font-bold text-sm ${
+          filter === "court"
+            ? "bg-teal-600 text-white"
+            : "bg-white shadow-sm text-gray-500"
+        }`}
+      >
+        จองสนาม
+      </button>
+
+      <button
+        onClick={() => setFilter("equipment")}
+        className={`px-5 py-2 rounded-full font-bold text-sm ${
+          filter === "equipment"
+            ? "bg-teal-600 text-white"
+            : "bg-white shadow-sm text-gray-500"
+        }`}
+      >
+        ยืมอุปกรณ์
+      </button>
+    </div>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {history.length > 0 ? history.map(b => {
+      {filteredHistory.length > 0 ? filteredHistory.map(b => {
         const dateText = b.booking_date
           ? new Date(b.booking_date + "T00:00:00").toLocaleDateString("en-GB")
           : "-";
@@ -108,7 +151,21 @@ const AdminBookingHistory = () => {
                 <span className="text-lg">📅</span>
                 <span className="font-bold">{dateText}</span>
               </div>
+              {b.booking_equipments?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="font-bold text-gray-700 flex items-center gap-2">
+                    👕 อุปกรณ์ที่ยืม
+                  </p>
 
+                  <ul className="list-disc list-inside text-sm text-gray-600">
+                    {b.booking_equipments.map((be, index) => (
+                      <li key={index}>
+                        {be.equipments?.name} x{be.quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {b.receipt_url && (
                 <div className="flex items-center gap-3">
                   <span className="text-lg">🧾</span>
