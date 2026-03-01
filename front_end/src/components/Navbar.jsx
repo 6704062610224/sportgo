@@ -118,7 +118,7 @@ export default function Navbar({ user, setUser }) {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
+      {/* {isMenuOpen && (
         <div className="md:hidden bg-white border-t px-4 py-4 space-y-3">
           <Link to="/" onClick={toggleMenu}>HOME</Link>
           <Link to="/booking" onClick={toggleMenu}>RESERVATION</Link>
@@ -140,7 +140,118 @@ export default function Navbar({ user, setUser }) {
             </div>
           )}
         </div>
-      )}
+      )} */}
+      {isMenuOpen && (
+  <div className="md:hidden bg-[#003E77] text-white border-t border-white/20 px-6 py-6 space-y-4 animate-fadeIn">
+
+    {user?.role === "admin" ? (
+      <>
+        <Link
+          to="/admin"
+          onClick={toggleMenu}
+          className={`block font-semibold ${
+            location.pathname === "/admin" ? "text-yellow-300" : "hover:text-teal-300"
+          }`}
+        >
+          DASHBOARD
+        </Link>
+
+        <Link
+          to="/admin/courts"
+          onClick={toggleMenu}
+          className={`block font-semibold ${
+            location.pathname === "/admin/courts"
+              ? "text-yellow-300"
+              : "hover:text-teal-300"
+          }`}
+        >
+          MANAGE COURTS
+        </Link>
+
+        <Link
+          to="/admin/borrow"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          MANAGE BORROW
+        </Link>
+
+        <Link
+          to="/admin/equipments"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          MANAGE EQUIPMENTS
+        </Link>
+
+        <Link
+          to="/admin/history"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          BOOKING HISTORY
+        </Link>
+      </>
+    ) : (
+      <>
+        <Link
+          to="/"
+          onClick={toggleMenu}
+          className={`block font-semibold ${
+            location.pathname === "/" ? "text-yellow-300" : "hover:text-teal-300"
+          }`}
+        >
+          HOME
+        </Link>
+
+        <Link
+          to="/booking"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          RESERVATION
+        </Link>
+
+        <Link
+          to="/history"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          MY HISTORY
+        </Link>
+
+        <Link
+          to="/borrow"
+          onClick={toggleMenu}
+          className="block font-semibold hover:text-teal-300"
+        >
+          BORROW
+        </Link>
+      </>
+    )}
+
+    {isLoggedIn && (
+      <div className="pt-6 border-t border-white/20">
+        <div className="flex items-center gap-3 mb-4">
+          <UserIcon size={18} />
+          <div>
+            <p className="text-xs opacity-70 uppercase">{user.role}</p>
+            <p className="font-semibold">
+              {user.username || user.email}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="w-full bg-red-500 hover:bg-red-600 transition rounded-xl py-2 font-bold"
+        >
+          LOGOUT
+        </button>
+      </div>
+    )}
+  </div>
+)}
     </nav>
   );
 }

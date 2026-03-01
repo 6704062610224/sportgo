@@ -32,7 +32,7 @@ const AdminDashboard = () => {
     // setPendingBookings(
     //   data.map(b => ({
     //     id: b.id,
-    //     user: b.users?.username ?? "-",
+    //     user: b.users?.username ?? "-",1
     //     email: b.users?.email ?? "-",
     //     type: b.courts?.category ?? "-",
     //     court: b.courts?.name ?? "-",
@@ -119,32 +119,81 @@ const [stats, setStats] = useState({
 //     bookedCourts: new Set(courtsData?.map(c => c.court_id)).size
 //   });
 // };
+// const fetchStats = async () => {
+//   const today = new Date().toISOString().slice(0, 10);
+
+//   // ✅ รอตรวจการชำระเงินจริง
+//   const { count: waiting } = await supabase
+//     .from("bookings")
+//     .select("*", { count: "exact", head: true })
+//     .in("status", ["pending", "waiting_verify"])
+//     .gte("booking_date", `${today}T00:00:00`); 
+//   const { count: totalBookings } = await supabase
+//     .from("bookings")
+//     .select("*", { count: "exact", head: true });
+
+//   const { data: revenueData } = await supabase
+//     .from("bookings")
+//     .select("total_price")
+//     .in("status", ["paid", "returned"])
+//     .eq("booking_date", today);
+
+//   const todayRevenue =
+//     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
+
+//   const { data: courtsData } = await supabase
+//     .from("bookings")
+//     .select("court_id")
+//     .eq("booking_date", today)
+//     .not("court_id", "is", null)
+//     .in("status", ["paid", "returned"]);
+
+//   setStats({
+//     waiting: waiting ?? 0,
+//     totalBookings: totalBookings ?? 0,
+//     todayRevenue,
+//     bookedCourts: new Set(courtsData?.map(c => c.court_id)).size
+//   });
+// };
+
 const fetchStats = async () => {
   const today = new Date().toISOString().slice(0, 10);
 
-  // ✅ รอตรวจการชำระเงินจริง
+  const startOfDay = `${today}T00:00:00`;
+  const endOfDay = `${today}T23:59:59`;
+
+  // ✅ รอตรวจ (วันนี้เท่านั้น)
   const { count: waiting } = await supabase
     .from("bookings")
     .select("*", { count: "exact", head: true })
     .in("status", ["pending", "waiting_verify"])
-    .gte("booking_date", `${today}T00:00:00`); 
+    .gte("booking_date", startOfDay)
+    .lte("booking_date", endOfDay);
+
+  // ✅ จำนวนคนจอง "วันนี้"
   const { count: totalBookings } = await supabase
     .from("bookings")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .gte("booking_date", startOfDay)
+    .lte("booking_date", endOfDay);
 
+  // ✅ รายได้วันนี้
   const { data: revenueData } = await supabase
     .from("bookings")
     .select("total_price")
     .in("status", ["paid", "returned"])
-    .eq("booking_date", today);
+    .gte("booking_date", startOfDay)
+    .lte("booking_date", endOfDay);
 
   const todayRevenue =
     revenueData?.reduce((sum, b) => sum + Number(b.total_price), 0) ?? 0;
 
+  // ✅ สนามที่ถูกจองวันนี้
   const { data: courtsData } = await supabase
     .from("bookings")
     .select("court_id")
-    .eq("booking_date", today)
+    .gte("booking_date", startOfDay)
+    .lte("booking_date", endOfDay)
     .not("court_id", "is", null)
     .in("status", ["paid", "returned"]);
 
@@ -241,7 +290,7 @@ const updateBookingStatus = async (bookingId, newStatus) => {
               val: stats.waiting
             },
             {
-              label: "จำนวนคนจอง",
+              label: "จำนวนคนจองวันนี้",
               val: stats.totalBookings
             },
             {
