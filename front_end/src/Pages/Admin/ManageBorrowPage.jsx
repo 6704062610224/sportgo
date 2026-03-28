@@ -4,6 +4,9 @@ import { supabase } from "../../supabaseClient";
 const ManageBorrowPage = () => {
   const [bookings, setBookings] = useState([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+
   const fetchData = async () => {
     const { data } = await supabase
       .from("bookings")
@@ -55,10 +58,42 @@ const ManageBorrowPage = () => {
     }
   };
   
+  // ฟังก์ชัน highlight
+  const highlight = (text, q) => {
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx < 0) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark style={{ background: "#FAC775", borderRadius: 2, padding: "0 1px" }}>
+          {text.slice(idx, idx + q.length)}
+        </mark>
+        {text.slice(idx + q.length)}
+      </>
+    );
+  };
+
+  const filteredBookings = bookings
+    .filter(b =>
+      b.users?.username?.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter(b => {
+      const isEquipmentOnly = !b.court_id;
+      let isOverdue = false;
+      if (!isEquipmentOnly) {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const compareDate = new Date(b.booking_date); compareDate.setHours(0, 0, 0, 0);
+        isOverdue = compareDate < today;
+      }
+      if (statusFilter === "inuse") return !isOverdue;
+      if (statusFilter === "overdue") return isOverdue;
+      return true;
+    });
   return (
   <div className="p-6">
     <h1 className="text-2xl font-bold mb-6">รายการยืมอุปกรณ์</h1>
-    <div className="mb-4">
+    {/* <div className="mb-4">
       <input
         type="text"
         placeholder="ค้นหาชื่อผู้ใช้..."
@@ -66,6 +101,56 @@ const ManageBorrowPage = () => {
         onChange={(e) => setSearch(e.target.value)}
         className="w-full md:w-1/3 px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
+    </div> */}
+    <div className="mb-4 flex flex-wrap gap-2 items-center">
+      {/* Search input */}
+      <div className="relative w-full md:w-72">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="ค้นหาชื่อผู้ใช้..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-8 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+        )}
+      </div>
+
+      {/* Filter pills */}
+      {[
+        { key: "all", label: "ทั้งหมด" },
+        { key: "inuse", label: "In use" },
+        { key: "overdue", label: "Overdue" },
+      ].map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => setStatusFilter(key)}
+          // className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
+          //   statusFilter === key
+          //     ? "bg-blue-100 border-blue-400 text-blue-700"
+          //     : "bg-white border-gray-200 text-gray-500 hover:border-blue-300"
+          // }`}
+          className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${
+            statusFilter === key
+              ? key === "overdue"
+                ? "bg-red-100 border-red-400 text-red-700"
+                : key === "inuse"
+                ? "bg-orange-100 border-orange-400 text-orange-600"
+                : "bg-gray-100 border-gray-400 text-gray-700"
+              : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+
+      {/* Result count */}
+      <span className="ml-auto text-sm text-gray-400">{filteredBookings.length} รายการ</span>
     </div>
     <div className="overflow-hidden rounded-lg  bg-white shadow-md">
       {/* Header */}
@@ -89,12 +174,7 @@ const ManageBorrowPage = () => {
       </div>
 
       {/* Rows */}
-      {bookings
-        .filter(b =>
-          b.users?.username
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
-        ).map(b => {
+      {filteredBookings.map(b => {
         // const borrowedDate = new Date(b.booking_date + "T00:00:00");
         // const today = new Date();
         // today.setHours(0, 0, 0, 0);
@@ -165,7 +245,8 @@ const ManageBorrowPage = () => {
             style={{ gridTemplateColumns: "2fr 2fr 2fr 2fr 2fr 1fr" }}
           >
             {/* Customer */}
-            <div>{b.users?.username}</div>
+            {/* <div>{b.users?.username}</div> */}
+            <div>{highlight(b.users?.username || "", search)}</div>
 
             {/* Borrowed Date */}
             <div>{borrowedDate.toLocaleDateString("en-GB")}</div>
