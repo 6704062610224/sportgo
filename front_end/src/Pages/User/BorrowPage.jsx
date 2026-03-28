@@ -717,6 +717,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from "../../supabaseClient";
 
+const getLocalDateString = () => {
+  const date = new Date();
+  const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+  return localDate.toISOString().split('T')[0];
+};
+
 export default function BorrowPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -862,7 +868,7 @@ export default function BorrowPage() {
   const equipTotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const grandTotal = (courtAmount || 0) + equipTotal;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const safeBookingDate = bookingDate && bookingDate !== "" ? bookingDate : today;
 
   const handleCheckout = async () => {
@@ -927,12 +933,12 @@ export default function BorrowPage() {
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">เลือกยืมอุปกรณ์</h1>
             <div className="flex overflow-x-auto gap-2 mt-4 no-scrollbar">
               {categories.map(cat => (
-                <button key={cat} onClick={() => setFilter(cat)} className={`px-5 py-2 rounded-full font-bold whitespace-nowrap transition-all ${filter === cat ? "bg-[#003E77] text-white shadow-md" : "bg-white text-gray-600 shadow-sm"}`}>{cat}</button>
+                <button key={cat} onClick={() => setFilter(cat)} className={`px-5 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${filter === cat ? "bg-[#003E77] text-white shadow-md" : "bg-white text-gray-600 shadow-sm"}`}>{cat}</button>
               ))}
             </div>
           </header>
 
-          <div className="grid gap-4">
+          {/* <div className="grid gap-4">
             {equipments.map(item => (
               <div key={item.id} className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4">
                 <img src={item.image_url || 'https://via.placeholder.com/100'} className="w-20 h-20 object-cover rounded-2xl bg-gray-50" alt="" />
@@ -949,6 +955,57 @@ export default function BorrowPage() {
                 </div>
               </div>
             ))}
+          </div> */}
+          <div className="grid gap-4">
+            {equipments.map(item => {
+              const qty = selectedEquips[item.id]?.qty || 0;
+              const isOutOfStock = item.stock === 0;
+              const isMaxQty = qty >= item.stock;
+
+              return (
+                <div key={item.id} className={`bg-white p-4 rounded-3xl shadow-sm border transition-all flex items-center gap-4 ${isOutOfStock ? "border-red-100 opacity-60" : "border-gray-100"}`}>
+                  <img src={item.image_url || 'https://via.placeholder.com/100'} className="w-20 h-20 object-cover rounded-2xl bg-gray-50 flex-shrink-0" alt="" />
+                  
+                  <div className="flex-grow">
+                    <h3 className="font-bold text-gray-800">{item.name}</h3>
+                    <p className="text-teal-600 font-bold text-sm">฿{item.price_per_unit}</p>
+                    {isOutOfStock ? (
+                      <span className="inline-block mt-1 text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                        หมดแล้ว
+                      </span>
+                    ) : (
+                      <span className="inline-block mt-1 text-xs text-gray-400">
+                        เหลือ {item.stock - qty} ชิ้น
+                      </span>
+                    )}
+                  </div>
+
+                  {isOutOfStock ? (
+                    <div className="px-4 py-2 rounded-xl bg-red-50 text-red-400 text-xs font-bold whitespace-nowrap">
+                      Out of stock
+                    </div>
+                  ) : (
+                    <div className="flex items-center bg-gray-50 rounded-xl p-1 gap-3">
+                      <button
+                        onClick={() => updateQuantity(item, -1)}
+                        disabled={qty === 0}
+                        className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        －
+                      </button>
+                      <span className="w-4 text-center font-bold">{qty}</span>
+                      <button
+                        onClick={() => updateQuantity(item, 1)}
+                        disabled={isMaxQty}
+                        className="w-8 h-8 bg-white rounded-lg shadow-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        ＋
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

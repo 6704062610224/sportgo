@@ -331,8 +331,8 @@ const BookingPage = () => {
           </div>
           <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
             {categories.map(cat => (
-              <button key={cat.name} onClick={() => setFilter(cat.name)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold transition-all ${filter === cat.name ? "bg-[#003E77] text-white shadow-lg" : "bg-white text-gray-600 hover:bg-teal-50"}`}>
-                <span>{cat.icon}</span> {cat.name}
+              <button key={cat.name} onClick={() => setFilter(cat.name)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${filter === cat.name ? "bg-[#003E77] text-white shadow-lg" : "bg-white text-gray-600 hover:bg-teal-50"}`}>
+                {cat.name}
               </button>
             ))}
           </div>
