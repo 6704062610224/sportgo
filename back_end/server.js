@@ -117,6 +117,7 @@ app.get('/api/courts', async (req, res) => {
 app.post('/api/create-booking', upload.single('slip_image'), async (req, res) => {
   try {
     const { user_id, court_id, total_price, bookingDate, booking_id } = req.body;
+
     const bookingTimes = JSON.parse(req.body.bookingTimes || '[]');
     const selectedEquipments = JSON.parse(req.body.selectedEquipments || '[]');
 
@@ -125,7 +126,30 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
     }
 
-    // 1. เช็ค booking ยังไม่ถูก cancel
+    // 🔥 แปลง range → slot
+    const expandTimeSlots = (times) => {
+      let result = [];
+
+      times.forEach(range => {
+        const [start, end] = range.split(" - ");
+        let current = parseInt(start);
+        const endHour = parseInt(end);
+
+        while (current < endHour) {
+          const next = current + 1;
+          result.push(
+            `${String(current).padStart(2, '0')}:00 - ${String(next).padStart(2, '0')}:00`
+          );
+          current = next;
+        }
+      });
+
+      return result;
+    };
+
+    const expandedTimes = expandTimeSlots(bookingTimes);
+
+    // 1. เช็ค booking ยังไม่ cancel
     const { data: checkBooking } = await supabase
       .from('bookings')
       .select('status')
@@ -135,27 +159,28 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     if (!checkBooking || checkBooking.status === 'cancelled') {
       return res.status(400).json({
         success: false,
-        message: "คิวนี้หมดเวลาและถูกยกเลิกไปแล้ว หากโอนเงินมาแล้วกรุณาติดต่อแอดมิน"
+        message: "คิวนี้หมดเวลาแล้ว"
       });
     }
 
-    // 2. เช็ค stock อุปกรณ์ตาม time slot ก่อน insert
-    if (selectedEquipments && selectedEquipments.length > 0) {
+    // 2. เช็ค stock
+    if (selectedEquipments.length > 0) {
 
-      // หา booking_ids ที่ใช้ time_slot เดียวกัน วันเดียวกัน
+      // หา booking ที่ใช้เวลา overlap
       const { data: slots } = await supabase
         .from('booking_time_slots')
         .select('booking_id')
-        .in('time_slot', bookingTimes)
+        .in('time_slot', expandedTimes)
         .eq('booking_date', bookingDate);
 
       const overlappingIds = [...new Set((slots || []).map(s => s.booking_id))]
-        .filter(id => String(id) !== String(booking_id)); // ไม่นับตัวเอง
+        .filter(id => String(id) !== String(booking_id));
 
       let usedStockMap = {};
 
       if (overlappingIds.length > 0) {
-        // กรองเฉพาะ active bookings
+
+        // filter active booking
         const { data: activeBookings } = await supabase
           .from('bookings')
           .select('id')
@@ -170,34 +195,38 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
             .select('equipment_id, quantity')
             .in('booking_id', activeIds);
 
-          (usedEquips || []).forEach(e => {
-            usedStockMap[e.equipment_id] = (usedStockMap[e.equipment_id] || 0) + e.quantity;
+          usedEquips?.forEach(e => {
+            usedStockMap[e.equipment_id] =
+              (usedStockMap[e.equipment_id] || 0) + e.quantity;
           });
         }
       }
 
-      // ดึง stock จริงของแต่ละอุปกรณ์
+      // ดึง stock จริง
       const equipmentIds = selectedEquipments.map(e => e.id);
       const { data: equipmentData } = await supabase
         .from('equipments')
         .select('id, stock, name')
         .in('id', equipmentIds);
 
-      // เช็คว่าพอมั้ย
+      // เช็ค stock
       for (const item of selectedEquipments) {
         const equip = equipmentData?.find(e => e.id === item.id);
+
         if (!equip) {
           return res.status(400).json({
             success: false,
             message: `ไม่พบอุปกรณ์ ${item.name}`
           });
         }
+
         const usedQty = usedStockMap[item.id] || 0;
         const realStock = equip.stock - usedQty;
+
         if (item.qty > realStock) {
           return res.status(400).json({
             success: false,
-            message: `${equip.name} ไม่เพียงพอในช่วงเวลานี้ (เหลือ ${realStock} ชิ้น)`
+            message: `${equip.name} ไม่พอ (เหลือ ${realStock})`
           });
         }
       }
@@ -205,17 +234,21 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
 
     // 3. Upload slip
     const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
+
     const { error: uploadError } = await supabase.storage
       .from('receipts')
-      .upload(fileName, slipFile.buffer, { contentType: slipFile.mimetype });
+      .upload(fileName, slipFile.buffer, {
+        contentType: slipFile.mimetype
+      });
+
     if (uploadError) throw uploadError;
 
     const { data: publicData } = supabase.storage
       .from('receipts')
       .getPublicUrl(fileName);
 
-    // 4. Update booking status
-    const { data: updatedBooking, error: updateError } = await supabase
+    // 4. update booking
+    const { error: updateError } = await supabase
       .from('bookings')
       .update({
         user_id,
@@ -223,29 +256,37 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         receipt_url: publicData.publicUrl,
         status: 'waiting'
       })
-      .eq('id', booking_id)
-      .select()
-      .single();
+      .eq('id', booking_id);
 
     if (updateError) throw updateError;
 
-    // 5. Insert booking_equipments
-    if (selectedEquipments && selectedEquipments.length > 0) {
+    // 5. insert equipments
+    if (selectedEquipments.length > 0) {
       const equipData = selectedEquipments.map(item => ({
         booking_id: booking_id,
         equipment_id: item.id,
         quantity: item.qty
       }));
+
       const { error: eError } = await supabase
         .from('booking_equipments')
         .insert(equipData);
+
       if (eError) throw eError;
     }
 
-    res.status(200).json({ success: true, message: "บันทึกการจองเรียบร้อย", booking_id });
+    res.json({
+      success: true,
+      message: "จองสำเร็จ",
+      booking_id
+    });
 
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 });
 
