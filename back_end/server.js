@@ -123,6 +123,9 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
 
     // ✅ DEBUG
     console.log("🔥 bookingTimes:", bookingTimes);
+    console.log("🔥 selectedEquipments:", selectedEquipments);
+    console.log("🔥 booking_id:", booking_id);
+    console.log("🔥 file:", req.file);
 
     // ✅ GUARD กัน crash
     if (!Array.isArray(bookingTimes) || bookingTimes.length === 0) {
@@ -242,7 +245,7 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         }
       }
     }
-
+    console.log("🔥 BEFORE UPLOAD");
     // 3. Upload slip
     const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
 
@@ -252,11 +255,18 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         contentType: slipFile.mimetype
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.log("❌ UPLOAD ERROR:", uploadError);
+      throw uploadError;
+    }
+
+    console.log("🔥 UPLOAD SUCCESS");
 
     const { data: publicData } = supabase.storage
       .from('receipts')
       .getPublicUrl(fileName);
+
+    console.log("🔥 PUBLIC URL:", publicData);
 
     // 4. update booking
     const { error: updateError } = await supabase
@@ -269,7 +279,12 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       })
       .eq('id', booking_id);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.log("❌ UPDATE ERROR:", updateError);
+      throw updateError;
+    }
+
+    console.log("🔥 UPDATE SUCCESS");
 
     // 5. insert equipments
     if (selectedEquipments.length > 0) {
@@ -283,7 +298,12 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         .from('booking_equipments')
         .insert(equipData);
 
-      if (eError) throw eError;
+      if (eError) {
+        console.log("❌ EQUIP ERROR:", eError);
+        throw eError;
+      }
+
+      console.log("🔥 EQUIP INSERT SUCCESS");
     }
 
     res.json({
