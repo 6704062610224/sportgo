@@ -713,7 +713,7 @@
 // }
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from "../../supabaseClient";
 
@@ -743,7 +743,7 @@ export default function BorrowPage() {
 
   const holdUntil = location.state?.holdUntil; 
   const [timeLeft, setTimeLeft] = useState("");
-
+  const courtDataRef = useRef(courtData);
   useEffect(() => {
     if (!holdUntil) return;
 
@@ -799,6 +799,8 @@ export default function BorrowPage() {
     return ranges.join(", ");
   };
   
+  
+
   useEffect(() => {
     const fetchEquip = async () => {
       let query = supabase.from('equipments').select('*');
@@ -923,6 +925,59 @@ export default function BorrowPage() {
     });
   };
 
+  // sync ref
+  useEffect(() => {
+    courtDataRef.current = courtData;
+  }, [courtData]);
+
+  // ✅ realtime listener ใช้ ref แทน
+  // useEffect(() => {
+  //   const channel = supabase
+  //     .channel("realtime-borrow-courts")
+  //     .on(
+  //       "postgres_changes",
+  //       { event: "UPDATE", schema: "public", table: "courts" },
+  //       (payload) => {
+  //         if (
+  //           payload.new.is_available === false &&
+  //           courtDataRef.current?.id === payload.new.id
+  //         ) {
+  //           alert("⚠️ สนามที่คุณจองถูกปิดปรับปรุง กรุณาติดต่อแอดมิน");
+  //           navigate('/booking');
+  //         }
+  //       }
+  //     )
+  //     .subscribe();
+
+  //   return () => supabase.removeChannel(channel);
+  // }, []); // ✅ [] ไม่ใส่ courtData เพราะใช้ ref แทน
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-borrow-courts")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "courts" },
+        (payload) => {
+          // ✅ เพิ่ม log ดูข้อมูลก่อน
+          console.log("🏟️ Court update payload:", payload);
+          console.log("🏟️ courtDataRef.current:", courtDataRef.current);
+          console.log("🏟️ payload.new.id:", payload.new.id);
+          console.log("🏟️ payload.new.is_available:", payload.new.is_available);
+
+          if (
+            payload.new.is_available === false &&
+            courtDataRef.current?.id === payload.new.id
+          ) {
+            console.log("❌ navigate จาก: court ถูกปิด");
+            alert("⚠️ สนามที่คุณจองถูกปิดปรับปรุง กรุณาติดต่อแอดมิน");
+            navigate('/booking');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-40">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">

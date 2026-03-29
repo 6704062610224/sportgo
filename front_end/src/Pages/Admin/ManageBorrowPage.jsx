@@ -78,14 +78,22 @@ const ManageBorrowPage = () => {
     .filter(b =>
       b.users?.username?.toLowerCase().includes(search.toLowerCase())
     )
+    // .filter(b => {
+    //   const isEquipmentOnly = !b.court_id;
+    //   let isOverdue = false;
+    //   if (!isEquipmentOnly) {
+    //     const today = new Date(); today.setHours(0, 0, 0, 0);
+    //     const compareDate = new Date(b.booking_date); compareDate.setHours(0, 0, 0, 0);
+    //     isOverdue = compareDate < today;
+    //   }
+    //   if (statusFilter === "inuse") return !isOverdue;
+    //   if (statusFilter === "overdue") return isOverdue;
+    //   return true;
+    // });
     .filter(b => {
-      const isEquipmentOnly = !b.court_id;
-      let isOverdue = false;
-      if (!isEquipmentOnly) {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const compareDate = new Date(b.booking_date); compareDate.setHours(0, 0, 0, 0);
-        isOverdue = compareDate < today;
-      }
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const compareDate = new Date(b.booking_date); compareDate.setHours(0, 0, 0, 0);
+      const isOverdue = compareDate < today;
       if (statusFilter === "inuse") return !isOverdue;
       if (statusFilter === "overdue") return isOverdue;
       return true;
@@ -309,20 +317,30 @@ const ManageBorrowPage = () => {
         <div className="bg-white p-5 rounded-sm border border-gray-200 shadow-sm">
           <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">กำลังใช้งาน (In Use)</p>
           <p className="text-2xl font-bold text-orange-500">
-            {bookings.filter(b => {
+            {/* {bookings.filter(b => {
               const compareDate = new Date(b.booking_date);
               compareDate.setHours(0,0,0,0);
               return compareDate >= new Date().setHours(0,0,0,0);
+            }).length} */}
+            {bookings.filter(b => {
+              const today = new Date(); today.setHours(0,0,0,0);
+              const compareDate = new Date(b.booking_date); compareDate.setHours(0,0,0,0);
+              return compareDate >= today;
             }).length}
           </p>
         </div>
         <div className="bg-white p-5 rounded-sm border border-gray-200 shadow-sm">
           <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">เกินกำหนด (Overdue)</p>
           <p className="text-2xl font-bold text-red-500">
-             {bookings.filter(b => {
+             {/* {bookings.filter(b => {
               const compareDate = new Date(b.booking_date);
               compareDate.setHours(0,0,0,0);
               return compareDate < new Date().setHours(0,0,0,0);
+            }).length} */}
+            {bookings.filter(b => {
+              const today = new Date(); today.setHours(0,0,0,0);
+              const compareDate = new Date(b.booking_date); compareDate.setHours(0,0,0,0);
+              return compareDate < today;
             }).length}
           </p>
         </div>
@@ -383,13 +401,16 @@ const ManageBorrowPage = () => {
             ) : (
               filteredBookings.map((b) => {
                 const borrowedDate = new Date(b.booking_date);
-                const isEquipmentOnly = !b.court_id;
-                let isOverdue = false;
-                if (!isEquipmentOnly) {
-                  const today = new Date().setHours(0, 0, 0, 0);
-                  const compareDate = new Date(borrowedDate).setHours(0, 0, 0, 0);
-                  isOverdue = compareDate < today;
-                }
+                // const isEquipmentOnly = !b.court_id;
+                // let isOverdue = false;
+                // if (!isEquipmentOnly) {
+                //   const today = new Date().setHours(0, 0, 0, 0);
+                //   const compareDate = new Date(borrowedDate).setHours(0, 0, 0, 0);
+                //   isOverdue = compareDate < today;
+                // }
+                const today = new Date().setHours(0, 0, 0, 0);
+                const compareDate = new Date(borrowedDate).setHours(0, 0, 0, 0);
+                const isOverdue = compareDate < today;
 
                 return (
                   <tr key={b.id} className="hover:bg-gray-50 transition-colors">

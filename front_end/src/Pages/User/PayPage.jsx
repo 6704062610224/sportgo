@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react'; // ตัววาด QR
 import generatePayload from 'promptpay-qr'; // ตัวสร้างรหัสพร้อมเพย์
@@ -9,7 +9,7 @@ export default function PayPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  
+  // const courtDataRef = useRef(courtData);
   // รับข้อมูลจากหน้า BorrowPage
   const { 
     bookingId,
@@ -28,6 +28,8 @@ export default function PayPage() {
   //     navigate('/booking');
   //   }
   // }, [bookingId, navigate]);
+  const courtDataRef = useRef(courtData);
+
   useEffect(() => {
     // ✅ ถ้าไม่มี state เลย (รีเฟรชหน้า) ค่อย redirect
     if (!location.state) {
@@ -182,6 +184,32 @@ export default function PayPage() {
     return ranges.join(", ");
   };
   console.log("bookingId:", bookingId);
+
+  useEffect(() => {
+  courtDataRef.current = courtData;
+}, [courtData]);
+
+  // ✅ realtime listener
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-pay-courts")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "courts" },
+        (payload) => {
+          if (
+            payload.new.is_available === false &&
+            courtDataRef.current?.id === payload.new.id
+          ) {
+            alert("⚠️ สนามที่คุณกำลังจ่ายเงินถูกปิดปรับปรุง กรุณาติดต่อแอดมิน");
+            navigate('/booking');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, []); // ✅ [] ไม่ใส่ courtData
   return (
     <div className="p-8 max-w-4xl mx-auto min-h-screen bg-gray-50">
       <h1 className="text-3xl font-black mb-6 text-gray-900">ชำระเงิน</h1>

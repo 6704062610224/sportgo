@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "../../supabaseClient";
 
@@ -17,10 +17,11 @@ const BookingPage = () => {
   const [selectedCourt, setSelectedCourt] = useState(null); 
   const [selectedTimes, setSelectedTimes] = useState([]); 
   const [courts, setCourts] = useState([]);
-  
+  const selectedCourtRef = useRef(null);
   // const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedDate, setSelectedDate] = useState(getLocalDateString(0));
   const [bookedTimes, setBookedTimes] = useState([]);
+  const [isClosed, setIsClosed] = useState(false);
 
   const [loading, setLoading] = useState(false);
   /* ===============================
@@ -66,7 +67,8 @@ const BookingPage = () => {
               payload.eventType === "UPDATE" &&
               payload.new.is_available === false
             ) {
-              if (selectedCourt?.id === payload.new.id) {
+              // if (selectedCourt?.id === payload.new.id) {
+              if (selectedCourtRef.current?.id === payload.new.id) {
                 setSelectedCourt(null);
                 setSelectedTimes([]);
                 alert("สนามนี้ถูกปิดปรับปรุง");
@@ -110,6 +112,10 @@ const BookingPage = () => {
 
   }, []); // ✅ แก้ให้ subscribe ครั้งเดียว
 
+  // sync ref ทุกครั้งที่ selectedCourt เปลี่ยน
+  useEffect(() => {
+    selectedCourtRef.current = selectedCourt;
+  }, [selectedCourt]);
 
   /* ===============================
      FETCH BOOKED SLOTS + REALTIME
@@ -120,6 +126,22 @@ const BookingPage = () => {
 
     const fetchBookedSlots = async () => {
       
+       // ✅ เช็ควันปิดก่อน
+      const { data: closures } = await supabase
+        .from("court_closures")
+        .select("*")
+        .eq("court_id", selectedCourt.id)
+        .eq("close_date", selectedDate);
+
+      if (closures && closures.length > 0) {
+        setIsClosed(true);
+        setBookedTimes([]);
+        setSelectedTimes([]);
+        return;
+      } else {
+        setIsClosed(false);
+      }
+
       const res = await fetch(
         `http://localhost:8000/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`
       );
@@ -253,6 +275,10 @@ const BookingPage = () => {
   //   }
   // };
   const confirmBooking = async () => {
+    if (isClosed) {
+      alert("สนามปิดในวันนี้");
+      return;
+    }
     if (selectedTimes.length === 0) {
       alert("กรุณาเลือกเวลา");
       return;
@@ -378,11 +404,15 @@ const BookingPage = () => {
                   className="w-full p-4 rounded-2xl border-2 border-gray-100 focus:border-blue-600 outline-none transition-all font-bold text-gray-700"
                 />
               </div>
-
+              {isClosed && (
+                <div className="mb-4 text-center text-red-500 font-bold">
+                  สนามปิดในวันนี้
+                </div>
+              )}
               {/* ส่วนเลือกเวลา (Time Slots) */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {timeSlots.map(time => {
-                  const isBooked = bookedTimes.includes(time); // ตรวจสอบว่าเวลานี้เต็มหรือยัง
+                  const isBooked = bookedTimes.includes(time) || isClosed; // ตรวจสอบว่าเวลานี้เต็มหรือยัง
                   return (
                     <button 
                       key={time} 
@@ -415,7 +445,7 @@ const BookingPage = () => {
               </div>
               
               <button 
-                disabled={selectedTimes.length === 0} 
+                disabled={selectedTimes.length === 0 || isClosed} 
                 onClick={confirmBooking} 
                 className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-all ${selectedTimes.length > 0 ? "bg-[#003E77] hover:bg-blue-700 active:scale-95" : "bg-gray-300"}`}
               >
