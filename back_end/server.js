@@ -121,6 +121,16 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     const bookingTimes = JSON.parse(req.body.bookingTimes || '[]');
     const selectedEquipments = JSON.parse(req.body.selectedEquipments || '[]');
 
+    // ✅ DEBUG
+    console.log("🔥 bookingTimes:", bookingTimes);
+
+    // ✅ GUARD กัน crash
+    if (!Array.isArray(bookingTimes) || bookingTimes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingTimes ไม่ถูกต้อง"
+      });
+    }
     const slipFile = req.file;
     if (!slipFile) {
       return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
@@ -147,7 +157,8 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       return result;
     };
 
-    const expandedTimes = expandTimeSlots(bookingTimes);
+    // const expandedTimes = expandTimeSlots(bookingTimes);
+    const expandedTimes = bookingTimes;
 
     // 1. เช็ค booking ยังไม่ cancel
     const { data: checkBooking } = await supabase
