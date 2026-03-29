@@ -5,6 +5,8 @@ import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr'; 
 import { supabase } from "../../supabaseClient"; 
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function PayPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -111,7 +113,7 @@ export default function PayPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/create-booking', {
+      const response = await fetch(`${API}/api/create-booking`, {
         method: 'POST',
         body: formData 
       });

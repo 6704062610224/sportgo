@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "../../supabaseClient";
 
+const API = import.meta.env.VITE_API_URL;
+
 const getLocalDateString = (daysToAdd = 0) => {
   const date = new Date();
   date.setDate(date.getDate() + daysToAdd);
@@ -126,9 +128,7 @@ const BookingPage = () => {
         setIsClosed(false);
       }
 
-      const res = await fetch(
-        `http://localhost:8000/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`
-      );
+      const res = await fetch(`${API}/api/booked-slots?court_id=${selectedCourt.id}&date=${selectedDate}`);
       const data = await res.json();
       setBookedTimes(data);
       setSelectedTimes([]);
@@ -209,7 +209,7 @@ const BookingPage = () => {
       return; 
     }
     try {
-      const res = await fetch("http://localhost:8000/api/hold-booking", {
+      const res = await fetch(`${API}/api/hold-booking`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
