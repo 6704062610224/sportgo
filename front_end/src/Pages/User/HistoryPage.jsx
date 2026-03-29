@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from "../../supabaseClient";
 
@@ -16,7 +14,7 @@ const HistoryPage = () => {
   }, []);
 
   useEffect(() => {
-  if (!user) return; // ⛔ รอจนกว่าจะมี user
+  if (!user) return; 
 
   let subscription;
 
@@ -44,16 +42,6 @@ const HistoryPage = () => {
 
         const isBorrowOnly = !item.courts;
 
-        // if (item.status === 'paid') {
-        //   uiStatus = isBorrowOnly ? 'borrowed' : 'booked';
-        //   uiStatusText = isBorrowOnly ? 'ยืมสำเร็จ' : 'จองสำเร็จ';
-        // } else if (item.status === 'returned') {
-        //   uiStatus = 'returned';
-        //   uiStatusText = 'คืนอุปกรณ์แล้ว';
-        // } else if (item.status === 'rejected') {
-        //   uiStatus = 'cancelled';
-        //   uiStatusText = 'ถูกปฏิเสธ';
-        // }
         if (item.status === 'paid') {
           uiStatus = isBorrowOnly ? 'borrowed' : 'booked';
           uiStatusText = isBorrowOnly ? 'ยืมสำเร็จ' : 'จองสำเร็จ';
@@ -194,16 +182,13 @@ const HistoryPage = () => {
             </div>
             <div className="space-y-4 text-sm text-gray-600 bg-gray-50 p-4 rounded-2xl mb-6">
               <div className="flex items-center gap-3">
-                {/* <span className="text-lg">📅</span>  */}
                 <span className="font-bold">{item.date}</span>
               </div>
               <div className="flex items-center gap-3">
-                {/* <span className="text-lg">⏰</span>  */}
                 <span className="font-black text-gray-900">{formatTimeDisplay(item.bookingTimes)}</span>
               </div>
               {item.items && (
                 <div className="flex items-center gap-3">
-                  {/* <span className="text-lg">👕</span>  */}
                   <span>{item.items}</span>
                 </div>
               )}

@@ -23,11 +23,6 @@ import ManageBorrowPage from "./Pages/Admin/ManageBorrowPage";
 import AdminBookingHistory from './Pages/Admin/AdminBookingHistory';
 import ManageEquipmentsPage from './Pages/Admin/ManageEquipmentsPage';
 
-/* ==========================================
-   🛡️ Route Protectors (ตัวป้องกันหน้าเว็บ)
-========================================== */
-
-// 1. หน้าที่ต้อง Login ก่อนถึงจะเข้าได้ (User ทั่วไป)
 const RequireAuth = ({ user, children }) => {
   if (!user || !user.id) {
     return <Navigate to="/login" replace />;
@@ -35,20 +30,15 @@ const RequireAuth = ({ user, children }) => {
   return children;
 };
 
-// 2. หน้าที่ต้องเป็น Admin เท่านั้นถึงจะเข้าได้
 const RequireAdmin = ({ user, children }) => {
   if (!user || !user.id) {
     return <Navigate to="/login" replace />;
   }
   if (user.role !== 'admin') {
-    return <Navigate to="/" replace />; // ถ้าล็อกอินแล้วแต่ไม่ใช่แอดมิน ให้เตะกลับหน้า Home
+    return <Navigate to="/" replace />; 
   }
   return children;
 };
-
-/* ==========================================
-   🚀 Main Application
-========================================== */
 
 function App() {
   const [user, setUser] = useState({
@@ -91,12 +81,10 @@ function App() {
       setLoading(false);
     };
 
-    // โหลดตอนเปิดเว็บครั้งแรก
     supabase.auth.getSession().then(({ data: { session } }) => {
       getProfile(session);
     });
 
-    // ฟังทุก auth event (LOGIN / LOGOUT) แบบ Real-time
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         getProfile(session);
@@ -106,7 +94,6 @@ function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // รอให้เช็คสถานะ Login เสร็จก่อน ค่อยวาดหน้าเว็บ (ป้องกันการโดนเตะมั่วตอนรีเฟรช)
   if (loading) return <div className="min-h-screen flex items-center justify-center">กำลังโหลดระบบ...</div>;
 
   return (
@@ -116,37 +103,21 @@ function App() {
         <Navbar user={user} setUser={setUser} />
 
         <Routes>
-          {/* ==========================================
-              🌍 Public Routes (ใครเข้าก็ได้)
-          ========================================== */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage setUser={setUser} />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/borrow" element={<BorrowPage />} />
 
-          {/* ==========================================
-              👤 User Protected Routes (ต้อง Login)
-          ========================================== */}
-          {/* <Route path="/booking" element={
-            <RequireAuth user={user}><BookingPage /></RequireAuth>
-          } /> */}
           <Route path="/pay" element={
             <RequireAuth user={user}><PayPage /></RequireAuth>
           } />
-          {/* <Route path="/borrow" element={
-            <RequireAuth user={user}><BorrowPage /></RequireAuth>
-          } /> */}
           <Route path="/history" element={
             <RequireAuth user={user}><HistoryPage /></RequireAuth>
           } />
           <Route path="/profile" element={
             <RequireAuth user={user}><ProfilePage user={user} setUser={setUser} /></RequireAuth>
           } />
-
-          {/* ==========================================
-              👑 Admin Protected Routes (ต้องเป็น Admin)
-          ========================================== */}
           <Route path="/admin" element={
             <RequireAdmin user={user}><AdminDashboard /></RequireAdmin>
           } />

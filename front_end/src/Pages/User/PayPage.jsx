@@ -1,16 +1,14 @@
 
 import React, { useState, useEffect, useRef  } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { QRCodeCanvas } from 'qrcode.react'; // ตัววาด QR
-import generatePayload from 'promptpay-qr'; // ตัวสร้างรหัสพร้อมเพย์
-import { supabase } from "../../supabaseClient"; // ตรวจสอบ path ให้ถูกนะครับ
+import { QRCodeCanvas } from 'qrcode.react';
+import generatePayload from 'promptpay-qr'; 
+import { supabase } from "../../supabaseClient"; 
 
 export default function PayPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  // const courtDataRef = useRef(courtData);
-  // รับข้อมูลจากหน้า BorrowPage
   const { 
     bookingId,
     courtData = null, 
@@ -21,24 +19,15 @@ export default function PayPage() {
     totalAmount = 0 
   } = location.state || {};
 
-  // 🛡️ ดักจับกรณีผู้ใช้รีเฟรชหน้าเว็บแล้วข้อมูลหาย
-  // useEffect(() => {
-  //   if (!bookingId) {
-  //     alert("ไม่พบข้อมูลการจอง กรุณาทำรายการใหม่อีกครั้งครับ");
-  //     navigate('/booking');
-  //   }
-  // }, [bookingId, navigate]);
   const courtDataRef = useRef(courtData);
 
   useEffect(() => {
-    // ✅ ถ้าไม่มี state เลย (รีเฟรชหน้า) ค่อย redirect
     if (!location.state) {
       alert("ไม่พบข้อมูลการจอง กรุณาทำรายการใหม่อีกครั้งครับ");
       navigate('/booking');
     }
   }, []);
 
-  // const totalAmount = courtAmount;
   const [qrCode, setQrCode] = useState("sample");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -46,38 +35,31 @@ export default function PayPage() {
   const PROMPTPAY_ID = import.meta.env.VITE_PROMPTPAY_ID;
   const holdUntil = location.state?.holdUntil; 
   
-  // State สำหรับเก็บเวลาที่เหลือ (เช่น "04:59")
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     if (!holdUntil) return;
 
-    // สร้างตัวนับเวลาให้ทำงานทุกๆ 1 วินาที (1000 ms)
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const expireTime = new Date(holdUntil).getTime();
       const distance = expireTime - now;
 
-      // ถ้าเวลาหมด (ระยะห่างติดลบ หรือเป็น 0)
       if (distance <= 0) {
         clearInterval(interval);
         setTimeLeft("00:00");
         alert("เวลาในการทำรายการหมดแล้ว ระบบได้ยกเลิกคิวของคุณ กรุณาทำรายการใหม่ครับ");
-        navigate('/booking'); // เด้งกลับไปหน้าจองสนาม
+        navigate('/booking'); 
       } else {
-        // คำนวณนาที และวินาที
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
         
-        // จัดฟอร์แมตให้เป็นเลข 2 หลักเสมอ (เช่น 04:05)
         setTimeLeft(`${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
       }
     }, 1000);
 
-    // เคลียร์ interval ทิ้งเมื่อผู้ใช้ปิดหน้านี้
     return () => clearInterval(interval);
   }, [holdUntil, navigate]);
-  // ดึงข้อมูล User
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,7 +73,6 @@ export default function PayPage() {
     getUser();
   }, [navigate]);
 
-  // สร้าง QR Code อัตโนมัติเมื่อยอดเงินเปลี่ยน
   useEffect(() => {
     if (totalAmount > 0) {
       const payload = generatePayload(PROMPTPAY_ID, { amount: totalAmount });
@@ -109,46 +90,36 @@ export default function PayPage() {
     if (!user) return alert("รอกำลังโหลดข้อมูลผู้ใช้...");
     if (!file) return alert("กรุณาแนบสลิปโอนเงินก่อนครับ");
 
-    // เตรียมข้อมูลแบบ FormData (สำหรับส่งไฟล์รูปภาพ)
     const formData = new FormData();
     formData.append('user_id', user.id);
     formData.append('booking_id', bookingId);
-    // formData.append('court_id', courtData?.id);
     if (courtData?.id) {
       formData.append('court_id', courtData.id);
     } 
-    // else {
-    //   alert("ไม่พบข้อมูลสนาม");
-    //   return;
-    // }
-    
     if (!totalAmount || isNaN(totalAmount)) {
       alert("ยอดเงินไม่ถูกต้อง");
       return;
     }
 
     formData.append('total_price', Number(totalAmount));
-    // formData.append('total_price', totalAmount);
-    // formData.append('bookingDate', bookingDate);
     if (safeBookingDate) {
       formData.append('bookingDate', safeBookingDate);
     }
     formData.append('bookingTimes', JSON.stringify(bookingTimes));
     formData.append('selectedEquipments', JSON.stringify(selectedEquipments));
-    formData.append('slip_image', file); // แนบไฟล์รูป
+    formData.append('slip_image', file); 
 
     setLoading(true);
     try {
-      // ตรวจสอบ Port ให้ตรงกับ Backend (8000)
       const response = await fetch('http://localhost:8000/api/create-booking', {
         method: 'POST',
-        body: formData // fetch จะจัดการ header ให้เอง
+        body: formData 
       });
 
       const result = await response.json();
       
       if (result.success) {
-        alert("🎉 จองสำเร็จ! ขอบคุณที่ใช้บริการ");
+        alert("จองสำเร็จ! ขอบคุณที่ใช้บริการ");
         navigate('/history');
       } else {
         alert("เกิดข้อผิดพลาด: " + (result.message || result.error));
@@ -189,7 +160,6 @@ export default function PayPage() {
   courtDataRef.current = courtData;
 }, [courtData]);
 
-  // ✅ realtime listener
   useEffect(() => {
     const channel = supabase
       .channel("realtime-pay-courts")
@@ -209,14 +179,13 @@ export default function PayPage() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, []); // ✅ [] ไม่ใส่ courtData
+  }, []);
   return (
     <div className="p-8 max-w-4xl mx-auto min-h-screen bg-gray-50">
       <h1 className="text-3xl font-black mb-6 text-gray-900">ชำระเงิน</h1>
       
       <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 grid md:grid-cols-2 gap-8">
           
-          {/* ฝั่งซ้าย: รายละเอียด */}
           <div>
             <h2 className="text-2xl font-bold mb-4 text-gray-800">{courtData?.name || "ไม่ระบุสนาม"}</h2>
             
@@ -258,7 +227,6 @@ export default function PayPage() {
             </div>
           </div>
 
-          {/* ฝั่งขวา: QR Code & Upload */}
           <div className="flex flex-col items-center justify-center border-l border-gray-100 pl-8 md:pl-8">
              <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-200 mb-6 relative group">
                 <div className="absolute inset-0 bg-teal-600 rounded-3xl opacity-0 group-hover:opacity-5 transition-opacity"></div>
