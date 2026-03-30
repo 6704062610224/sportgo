@@ -113,13 +113,36 @@ export default function PayPage() {
 
     setLoading(true);
     try {
+      // const response = await fetch(`${API}/api/create-booking`, {
+      //   method: 'POST',
+      //   body: formData 
+      // });
+
+      // const result = await response.json();
+      // 🔥 DEBUG API
+      console.log("🔥 API:", API);
+      console.log("🔥 SEND bookingTimes:", bookingTimes);
+      console.log("🔥 SEND bookingId:", bookingId);
       const response = await fetch(`${API}/api/create-booking`, {
         method: 'POST',
-        body: formData 
+        body: formData,
+        mode: 'cors' // ✅ เพิ่มอันนี้
       });
 
-      const result = await response.json();
-      
+      // 🔥 DEBUG STATUS
+      console.log("🔥 response status:", response.status);
+
+      let result;
+
+      try {
+        result = await response.json(); // ✅ กันพังตรงนี้
+        console.log("🔥 RESULT:", result);
+      } catch (err) {
+        console.error("❌ JSON parse error:", err);
+        alert("Server ตอบกลับไม่ถูกต้อง");
+        return;
+      }
+
       if (result.success) {
         alert("จองสำเร็จ! ขอบคุณที่ใช้บริการ");
         navigate('/history');

@@ -455,7 +455,34 @@ const HistoryPage = () => {
                 </div>
 
                 {/* ปุ่มยืมอุปกรณ์เพิ่ม — เฉพาะ booked */}
-                {item.status === 'booked' && (
+                {/* {item.status === 'booked' && (
+                  <button
+                    onClick={() => navigate('/borrow', {
+                      state: {
+                        bookingId: null,
+                        courtData: { name: item.title, category: item.courtCategory },
+                        bookingTimes: item.bookingTimes,
+                        bookingDate: item.rawDate,
+                        courtAmount: 0,
+                      }
+                    })}
+                    className="w-full py-2.5 rounded-xl bg-[#003E77] hover:bg-blue-800 active:scale-[0.98] text-white text-sm font-semibold transition-all"
+                  >
+                    ยืมอุปกรณ์เพิ่ม
+                  </button>
+                )} */}
+                {item.status === 'booked' && (() => {
+                  const now = new Date();
+
+                  const lastTime = item.bookingTimes[item.bookingTimes.length - 1];
+                  if (!lastTime) return false;
+
+                  const [start, end] = lastTime.split(" - ");
+
+                  const bookingEnd = new Date(`${item.rawDate}T${end}:00`);
+
+                  return bookingEnd > now; 
+                })() && (
                   <button
                     onClick={() => navigate('/borrow', {
                       state: {
@@ -471,7 +498,6 @@ const HistoryPage = () => {
                     ยืมอุปกรณ์เพิ่ม
                   </button>
                 )}
-
               </div>
             );
           }) : (

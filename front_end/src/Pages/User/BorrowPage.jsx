@@ -420,9 +420,20 @@ export default function BorrowPage() {
   const [timeLeft, setTimeLeft] = useState("");
   const courtDataRef = useRef(courtData);
 
+  
+  
+
   const today = getLocalDateString();
   const safeBookingDate = bookingDate && bookingDate !== "" ? bookingDate : today;
+  const bookingTimesRef = useRef(bookingTimes);      // ✅ เพิ่ม
+  const safeBookingDateRef = useRef(safeBookingDate); // ✅ เพิ่ม
+  useEffect(() => {
+    bookingTimesRef.current = bookingTimes;
+  }, [bookingTimes]);
 
+  useEffect(() => {
+    safeBookingDateRef.current = safeBookingDate;
+  }, [safeBookingDate]);
   // --- Countdown ---
   useEffect(() => {
     if (!holdUntil) return;
@@ -461,15 +472,83 @@ export default function BorrowPage() {
   };
 
   // --- Fetch used stock ตาม time slot และวันที่ ---
-  const fetchUsedStock = async () => {
-    if (!bookingTimes || bookingTimes.length === 0 || !safeBookingDate) return;
+  // const fetchUsedStock = async () => {
+  //   const times = bookingTimesRef.current;   // ✅ เปลี่ยน
+  //   const date = safeBookingDateRef.current; // ✅ เปลี่ยน
+    
 
-    // 1. หา booking_ids ที่ time_slot และ booking_date ตรงกัน
+  //   console.log("🔍 fetchUsedStock called");
+  //   console.log("🔍 times:", times);
+  //   console.log("🔍 date:", date);
+  //   if (!times || times.length === 0 || !date) {
+  //     console.log("❌ early return — times or date missing");
+  //     return;
+  //   }
+  //   if (!bookingTimes || bookingTimes.length === 0 || !safeBookingDate) return;
+
+  //   // 1. หา booking_ids ที่ time_slot และ booking_date ตรงกัน
+  //   const { data: slots } = await supabase
+  //     .from('booking_time_slots')
+  //     .select('booking_id')
+  //     .in('time_slot', times)    // ✅ เปลี่ยนจาก bookingTimes
+  //     .eq('booking_date', date); // ✅ เปลี่ยนจาก safeBookingDate
+  //     // .in('time_slot', bookingTimes)
+  //     // .eq('booking_date', safeBookingDate);
+  //   console.log("🔍 slots found:", slots);
+  //   if (!slots || slots.length === 0) {
+  //     setUsedStockMap({});
+  //     return;
+  //   }
+
+  //   const bookingIds = [...new Set(slots.map(s => s.booking_id))];
+
+  //   // 2. กรองเฉพาะ booking ที่ active
+  //   const { data: activeBookings } = await supabase
+  //     .from('bookings')
+  //     .select('id')
+  //     .in('id', bookingIds)
+  //     .in('status', ['paid', 'pending', 'waiting']);
+  //     // .eq('booking_date', safeBookingDate);
+  //   console.log("🔍 activeBookings:", activeBookings); // ✅ เพิ่ม
+
+  //   if (!activeBookings || activeBookings.length === 0) {
+  //     setUsedStockMap({});
+  //     return;
+  //   }
+
+  //   const activeIds = activeBookings.map(b => b.id);
+
+  //   // 3. ดึง equipment ที่ถูกใช้ไปแล้ว
+  //   const { data: usedEquips } = await supabase
+  //     .from('booking_equipments')
+  //     .select('equipment_id, quantity')
+  //     .in('booking_id', activeIds);
+  //   console.log("🔍 usedEquips:", usedEquips); // ✅ เพิ่ม
+  //   console.log("🔍 final map:", map); // ✅ เพิ่มหลัง forEach
+  //   // 4. รวม qty ต่อ equipment_id
+  //   // const map = {};
+  //   // usedEquips?.forEach(e => {
+  //   //   map[e.equipment_id] = (map[e.equipment_id] || 0) + e.quantity;
+  //   // });
+
+  //   // setUsedStockMap(map);
+  //   const stockMap = {};
+  //   usedEquips?.forEach(e => {
+  //     stockMap[e.equipment_id] = (stockMap[e.equipment_id] || 0) + e.quantity;
+  //   });
+  //   setUsedStockMap(stockMap);
+  // };
+  const fetchUsedStock = async () => {
+    const times = bookingTimesRef.current;
+    const date = safeBookingDateRef.current;
+
+    if (!times || times.length === 0 || !date) return;
+
     const { data: slots } = await supabase
       .from('booking_time_slots')
       .select('booking_id')
-      .in('time_slot', bookingTimes)
-      .eq('booking_date', safeBookingDate);
+      .in('time_slot', times)
+      .eq('booking_date', date);
 
     if (!slots || slots.length === 0) {
       setUsedStockMap({});
@@ -478,12 +557,11 @@ export default function BorrowPage() {
 
     const bookingIds = [...new Set(slots.map(s => s.booking_id))];
 
-    // 2. กรองเฉพาะ booking ที่ active
     const { data: activeBookings } = await supabase
       .from('bookings')
       .select('id')
       .in('id', bookingIds)
-      .in('status', ['paid', 'pending']);
+      .in('status', ['paid', 'pending', 'waiting']);
 
     if (!activeBookings || activeBookings.length === 0) {
       setUsedStockMap({});
@@ -492,21 +570,18 @@ export default function BorrowPage() {
 
     const activeIds = activeBookings.map(b => b.id);
 
-    // 3. ดึง equipment ที่ถูกใช้ไปแล้ว
     const { data: usedEquips } = await supabase
       .from('booking_equipments')
       .select('equipment_id, quantity')
       .in('booking_id', activeIds);
 
-    // 4. รวม qty ต่อ equipment_id
-    const map = {};
+    const stockMap = {};
     usedEquips?.forEach(e => {
-      map[e.equipment_id] = (map[e.equipment_id] || 0) + e.quantity;
+      stockMap[e.equipment_id] = (stockMap[e.equipment_id] || 0) + e.quantity;
     });
 
-    setUsedStockMap(map);
+    setUsedStockMap(stockMap);
   };
-
   // --- Fetch equipments + realtime ---
   useEffect(() => {
     const fetchEquip = async () => {
@@ -533,15 +608,24 @@ export default function BorrowPage() {
   useEffect(() => {
     fetchUsedStock();
 
-    const channel = supabase
+    const channel1 = supabase
       .channel('realtime-used-stock')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'booking_equipments' },
         () => fetchUsedStock()
       )
       .subscribe();
-
-    return () => supabase.removeChannel(channel);
+    const channel2 = supabase
+      .channel('realtime-used-stock-bookings')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bookings' },
+        () => fetchUsedStock()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel1);
+      supabase.removeChannel(channel2);
+    };
   }, [bookingTimes, safeBookingDate]);
 
   // --- ป้องกัน qty เกิน realStock เมื่อ stock เปลี่ยน ---
@@ -623,6 +707,19 @@ export default function BorrowPage() {
 
       finalBookingId = newBooking.id;
       finalHoldUntil = newBooking.hold_until;
+
+      if (bookingTimes && bookingTimes.length > 0) {
+        const timeData = bookingTimes.map(time => ({
+          booking_id: newBooking.id,
+          court_id: null,
+          booking_date: safeBookingDate,
+          time_slot: time
+        }));
+
+        await supabase
+          .from('booking_time_slots')
+          .insert(timeData);
+      }
     }
 
     navigate('/pay', {

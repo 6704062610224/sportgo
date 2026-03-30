@@ -31,14 +31,14 @@ const ManageBorrowPage = () => {
     const confirm = window.confirm("ยืนยันว่าคืนอุปกรณ์แล้ว?");
     if (!confirm) return;
 
-    if (bookingEquipments && bookingEquipments.length > 0) {
-      for (const item of bookingEquipments) {
-        await supabase.rpc("increment_stock", {
-          equip_id: item.equipments.id,
-          amount: item.quantity
-        });
-      }
-    }
+    // if (bookingEquipments && bookingEquipments.length > 0) {
+    //   for (const item of bookingEquipments) {
+    //     await supabase.rpc("increment_stock", {
+    //       equip_id: item.equipments.id,
+    //       amount: item.quantity
+    //     });
+    //   }
+    // }
 
     const { error } = await supabase
       .from("bookings")

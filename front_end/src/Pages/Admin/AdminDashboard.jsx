@@ -142,34 +142,48 @@ useEffect(() => {
 }, []);
 const updateBookingStatus = async (bookingId, newStatus) => { 
   try { 
+    // if (newStatus === "rejected") {
+    //    // ✅ ดึงอุปกรณ์ที่ผูกกับ booking นี้ก่อน
+    //   const { data: equipData } = await supabase
+    //     .from("booking_equipments")
+    //     .select("equipment_id, quantity")
+    //     .eq("booking_id", bookingId);
+
+    //   // ✅ คืน stock ทีละชิ้น
+    //   if (equipData && equipData.length > 0) {
+    //     for (const item of equipData) {
+    //       await supabase.rpc("increment_stock", {
+    //         equip_id: item.equipment_id,
+    //         amount: item.quantity
+    //       });
+    //     }
+    //   }
+
+
+    //   const { error } = await supabase
+    //     .from("bookings")
+    //     .update({ status: "rejected" })
+    //     .eq("id", bookingId);
+    //   if (error) throw error;
+
+    //   // ลบ slot
+    //   // await supabase.from("slots").delete().eq("booking_id", bookingId);
+    //   await supabase.from("booking_time_slots").delete().eq("booking_id", bookingId);
+    // }
     if (newStatus === "rejected") {
-       // ✅ ดึงอุปกรณ์ที่ผูกกับ booking นี้ก่อน
-      const { data: equipData } = await supabase
-        .from("booking_equipments")
-        .select("equipment_id, quantity")
-        .eq("booking_id", bookingId);
-
-      // ✅ คืน stock ทีละชิ้น
-      if (equipData && equipData.length > 0) {
-        for (const item of equipData) {
-          await supabase.rpc("increment_stock", {
-            equip_id: item.equipment_id,
-            amount: item.quantity
-          });
-        }
-      }
-
-
+      // ✅ แค่ update status และลบ time_slots เท่านั้น
       const { error } = await supabase
         .from("bookings")
         .update({ status: "rejected" })
         .eq("id", bookingId);
       if (error) throw error;
 
-      // ลบ slot
-      // await supabase.from("slots").delete().eq("booking_id", bookingId);
-      await supabase.from("booking_time_slots").delete().eq("booking_id", bookingId);
-    } else {
+      await supabase
+        .from("booking_time_slots")
+        .delete()
+        .eq("booking_id", bookingId);
+    }
+     else {
       const { error } = await supabase
         .from("bookings")
         .update({ status: newStatus })
