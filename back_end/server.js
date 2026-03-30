@@ -237,7 +237,8 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       p_equipments: selectedEquipments,
       p_status: status,
       p_transaction_id: transactionId,
-      p_verified: autoApproved
+      p_verified: autoApproved,
+      p_is_additional: selectedEquipments.length > 0 && !court_id 
     });
 
     if (rpcError) {

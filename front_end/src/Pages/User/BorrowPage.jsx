@@ -498,7 +498,7 @@ export default function BorrowPage() {
 
             {/* CTA */}
             <button
-              disabled={grandTotal === 0}
+              disabled={grandTotal === 0 && cartItems.length === 0}
               onClick={handleCheckout}
               className="w-full bg-[#003E77] hover:bg-blue-800 active:scale-[0.98] text-white py-3.5 rounded-xl font-bold text-sm mt-4 transition-all disabled:bg-gray-100 disabled:text-gray-300"
             >
