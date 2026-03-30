@@ -278,19 +278,30 @@ export default function BorrowPage() {
         if (!bookingId) {
           await supabase
             .from("booking_time_slots")
-            .insert(timesData);
+            .insert(timeData);
         }
       }
     }
 
+    // navigate('/pay', {
+    //   state: {
+    //     bookingId: finalBookingId,
+    //     courtData,
+    //     bookingTimes,
+    //     bookingDate: safeBookingDate,
+    //     selectedEquipments: cartItems,
+    //     holdUntil: finalHoldUntil,
+    //     totalAmount: grandTotal
+    //   }
+    // });
     navigate('/pay', {
       state: {
-        bookingId: finalBookingId,
+        bookingId,
         courtData,
         bookingTimes,
         bookingDate: safeBookingDate,
         selectedEquipments: cartItems,
-        holdUntil: finalHoldUntil,
+        holdUntil,
         totalAmount: grandTotal
       }
     });

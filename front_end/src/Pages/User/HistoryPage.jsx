@@ -222,7 +222,9 @@ const HistoryPage = () => {
                 {item.status === 'booked' && (() => {
                   const now = new Date();
 
-                  const lastTime = item.bookingTimes[item.bookingTimes.length - 1];
+                  const lastTime = [...item.bookingTimes]
+                    .sort((a, b) => parseInt(a) - parseInt(b))
+                    .at(-1);
                   if (!lastTime) return false;
 
                   const [start, end] = lastTime.split(" - ");

@@ -272,30 +272,38 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
 });
 app.post('/api/add-equipment', async (req, res) => {
   try {
-    const { booking_id, equipment_price } = req.body;
+    const { booking_id, equipment_id, qty, price } = req.body;
 
-    // 🔥 ดึงราคาปัจจุบันก่อน
-    const { data: booking, error: fetchError } = await supabase
+    // 🔥 1. insert อุปกรณ์
+    const { error: insertError } = await supabase
+      .from('booking_equipments')
+      .insert({
+        booking_id,
+        equipment_id,
+        quantity: qty
+      });
+
+    if (insertError) {
+      return res.status(400).json({ success: false, message: insertError.message });
+    }
+
+    // 🔥 2. ดึงราคาเดิม
+    const { data: booking } = await supabase
       .from('bookings')
       .select('total_price')
       .eq('id', booking_id)
       .single();
 
-    if (fetchError || !booking) {
-      return res.status(400).json({ success: false, message: "หา booking ไม่เจอ" });
-    }
+    const newTotal = Number(booking.total_price) + (price * qty);
 
-    const newTotal = Number(booking.total_price) + Number(equipment_price);
-
-    // 🔥 อัปเดตราคาใหม่
-    const { error: updateError } = await supabase
+    // 🔥 3. update ราคา + reset สถานะ
+    await supabase
       .from('bookings')
-      .update({ total_price: newTotal })
+      .update({
+        total_price: newTotal,
+        status: "waiting"
+      })
       .eq('id', booking_id);
-
-    if (updateError) {
-      return res.status(400).json({ success: false, message: "อัปเดตไม่สำเร็จ" });
-    }
 
     res.json({ success: true, new_total: newTotal });
 
@@ -562,7 +570,7 @@ app.post('/api/cancel-booking', async (req, res) => {
   await supabase
     .from('bookings')
     .update({ status: 'cancelled' })
-    .eq('booking_id', booking_id);
+    .eq('id', booking_id);
 
   res.json({ success: true });
 });
