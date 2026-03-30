@@ -113,29 +113,21 @@ export default function PayPage() {
 
     setLoading(true);
     try {
-      // const response = await fetch(`${API}/api/create-booking`, {
-      //   method: 'POST',
-      //   body: formData 
-      // });
-
-      // const result = await response.json();
-      // 🔥 DEBUG API
       console.log("🔥 API:", API);
       console.log("🔥 SEND bookingTimes:", bookingTimes);
       console.log("🔥 SEND bookingId:", bookingId);
       const response = await fetch(`${API}/api/create-booking`, {
         method: 'POST',
         body: formData,
-        mode: 'cors' // ✅ เพิ่มอันนี้
+        mode: 'cors'
       });
 
-      // 🔥 DEBUG STATUS
       console.log("🔥 response status:", response.status);
 
       let result;
 
       try {
-        result = await response.json(); // ✅ กันพังตรงนี้
+        result = await response.json();
         console.log("🔥 RESULT:", result);
       } catch (err) {
         console.error("❌ JSON parse error:", err);

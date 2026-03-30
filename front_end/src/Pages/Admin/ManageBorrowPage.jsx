@@ -31,15 +31,6 @@ const ManageBorrowPage = () => {
     const confirm = window.confirm("ยืนยันว่าคืนอุปกรณ์แล้ว?");
     if (!confirm) return;
 
-    // if (bookingEquipments && bookingEquipments.length > 0) {
-    //   for (const item of bookingEquipments) {
-    //     await supabase.rpc("increment_stock", {
-    //       equip_id: item.equipments.id,
-    //       amount: item.quantity
-    //     });
-    //   }
-    // }
-
     const { error } = await supabase
       .from("bookings")
       .update({
@@ -84,10 +75,8 @@ const ManageBorrowPage = () => {
   return (
     <div className="flex-1 p-10 bg-[#FAFAFA] min-h-screen">
       
-      {/* HEADER */}
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Manage Borrowing</h1>
 
-      {/* STAT CARDS (เลียนแบบหน้า History) */}
       <div className="grid grid-cols-3 gap-4 mb-10">
         <div className="bg-white p-5 rounded-sm border border-gray-200 shadow-sm">
           <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">รายการยืมทั้งหมด</p>
@@ -117,7 +106,6 @@ const ManageBorrowPage = () => {
         </div>
       </div>
 
-      {/* TOOLBAR */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div className="flex gap-6 border-b border-gray-100">
           {[
@@ -150,7 +138,6 @@ const ManageBorrowPage = () => {
         </div>
       </div>
 
-      {/* DATA TABLE (สไตล์เดียวกับ History) */}
       <div className="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left text-xs">
           <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold">
@@ -190,12 +177,10 @@ const ManageBorrowPage = () => {
                       </div>
                     </td>
 
-                    {/* Date */}
                     <td className="p-4 text-gray-500 font-mono">
                       {borrowedDate.toLocaleDateString("en-GB")}
                     </td>
 
-                    {/* Equipment Details */}
                     <td className="p-4">
                       <div className="space-y-1">
                         {b.booking_equipments.map((e, i) => (
@@ -207,7 +192,6 @@ const ManageBorrowPage = () => {
                       </div>
                     </td>
 
-                    {/* Status Badge */}
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
@@ -220,7 +204,6 @@ const ManageBorrowPage = () => {
                       </span>
                     </td>
 
-                    {/* Action */}
                     <td className="p-4 text-right">
                       <button
                         onClick={() => handleReturn(b.id, b.booking_equipments)}

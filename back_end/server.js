@@ -42,78 +42,6 @@ app.get('/api/courts', async (req, res) => {
     res.status(500).json([]);
   }
 });
-
-// app.post('/api/create-booking', upload.single('slip_image'), async (req, res) => {
-//   try {
-//     const { user_id, court_id, total_price, bookingDate, booking_id } = req.body;
-
-//     const bookingTimes = JSON.parse(req.body.bookingTimes || '[]');
-//     const selectedEquipments = JSON.parse(req.body.selectedEquipments || '[]');
-
-//     const slipFile = req.file;
-//     if (!slipFile) {
-//       return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
-//     }
-
-//     const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
-
-//     const { error: uploadError } = await supabase.storage
-//       .from('receipts')
-//       .upload(fileName, slipFile.buffer, {
-//         contentType: slipFile.mimetype
-//       });
-
-//     if (uploadError) throw uploadError;
-
-//     // 2. เอา public URL
-//     const { data: publicData } = supabase.storage
-//       .from('receipts')
-//       .getPublicUrl(fileName);
-
-//     const { data: checkBooking } = await supabase
-//       .from('bookings')
-//       .select('status')
-//       .eq('id', booking_id)
-//       .single();
-
-//     if (!checkBooking || checkBooking.status === 'cancelled') {
-//       return res.status(400).json({ 
-//         success: false, 
-//         message: "คิวนี้หมดเวลาและถูกยกเลิกไปแล้ว หากโอนเงินมาแล้วกรุณาติดต่อแอดมิน" 
-//       });
-//     }
-//     const { data: updatedBooking, error: updateError } = await supabase
-//       .from('bookings')
-//       .update({
-//         user_id,
-//         total_price,
-//         receipt_url: publicData.publicUrl,
-//         status: 'waiting'
-//       })
-//       .eq('id', booking_id)
-//       .select()    
-//       .single();   
-
-//     if (updateError) throw updateError;
-
-//     console.log("🔥 UPDATED BOOKING:", updatedBooking);
-
-//     if (selectedEquipments && selectedEquipments.length > 0) {
-//       const equipData = selectedEquipments.map(item => ({
-//         booking_id: booking_id,
-//         equipment_id: item.id,
-//         quantity: item.qty 
-//       }));
-//       const { error: eError } = await supabase.from('booking_equipments').insert(equipData);
-//       if (eError) throw eError;
-//     }
-    
-//     res.status(200).json({ success: true, message: "บันทึกการจองเรียบร้อย", booking_id: booking_id });
-//   } catch (err) {
-//     res.status(500).json({ success: false, error: err.message });
-//   }
-// });
-
 app.post('/api/create-booking', upload.single('slip_image'), async (req, res) => {
   try {
     const { user_id, court_id, total_price, bookingDate, booking_id } = req.body;
@@ -139,7 +67,6 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
     }
 
-    // 🔥 แปลง range → slot
     const expandTimeSlots = (times) => {
       let result = [];
 
@@ -160,27 +87,10 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       return result;
     };
 
-    // const expandedTimes = expandTimeSlots(bookingTimes);
     const expandedTimes = bookingTimes;
 
-    // 1. เช็ค booking ยังไม่ cancel
-    // const { data: checkBooking } = await supabase
-    //   .from('bookings')
-    //   .select('status')
-    //   .eq('id', booking_id)
-    //   .single();
-    
-    // if (!checkBooking || checkBooking.status === 'cancelled') {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "คิวนี้หมดเวลาแล้ว"
-    //   });
-    // }
-    
-    // 2. เช็ค stock
     if (selectedEquipments.length > 0) {
 
-      // หา booking ที่ใช้เวลา overlap
       const { data: slots } = await supabase
         .from('booking_time_slots')
         .select('booking_id')
@@ -194,7 +104,6 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
 
       if (overlappingIds.length > 0) {
 
-        // filter active booking
         const { data: activeBookings } = await supabase
           .from('bookings')
           .select('id')
@@ -216,14 +125,12 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         }
       }
 
-      // ดึง stock จริง
       const equipmentIds = selectedEquipments.map(e => e.id);
       const { data: equipmentData } = await supabase
         .from('equipments')
         .select('id, stock, name')
         .in('id', equipmentIds);
 
-      // เช็ค stock
       for (const item of selectedEquipments) {
         const equip = equipmentData?.find(e => e.id === item.id);
 
@@ -246,7 +153,6 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       }
     }
     console.log("🔥 BEFORE UPLOAD");
-    // 3. Upload slip
     const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
 
     const { error: uploadError } = await supabase.storage
@@ -282,40 +188,12 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
         message: rpcError.message
       });
     }
-    // // 4. update booking
-    // const { error: updateError } = await supabase
-    //   .from('bookings')
-    //   .update({
-    //     user_id,
-    //     total_price,
-    //     receipt_url: publicData.publicUrl,
-    //     status: 'waiting'
-    //   })
-    //   .eq('id', booking_id);
-
-    // if (updateError) {
-    //   console.log("❌ UPDATE ERROR:", updateError);
-    //   throw updateError;
-    // }
-
-    // console.log("🔥 UPDATE SUCCESS");
-
-    // 5. insert equipments
     if (selectedEquipments.length > 0) {
       const equipData = selectedEquipments.map(item => ({
         booking_id: booking_id,
         equipment_id: item.id,
         quantity: item.qty
       }));
-
-      // const { error: eError } = await supabase
-      //   .from('booking_equipments')
-      //   .insert(equipData);
-
-      // if (eError) {
-      //   console.log("❌ EQUIP ERROR:", eError);
-      //   throw eError;
-      // }
 
       console.log("🔥 EQUIP INSERT SUCCESS");
     }
@@ -335,7 +213,6 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
   }
 });
 
-// --- Auth Routes ---
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
@@ -463,13 +340,11 @@ app.post('/api/hold-booking', async (req, res) => {
 app.post('/api/cancel-booking', async (req, res) => {
   const { booking_id } = req.body;
 
-  // ลบ time slots ออก (release hold)
   await supabase
     .from('booking_time_slots')
     .delete()
     .eq('booking_id', booking_id);
 
-  // อัปเดต status เป็น cancelled
   await supabase
     .from('bookings')
     .update({ status: 'cancelled' })

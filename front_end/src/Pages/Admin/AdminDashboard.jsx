@@ -142,36 +142,7 @@ useEffect(() => {
 }, []);
 const updateBookingStatus = async (bookingId, newStatus) => { 
   try { 
-    // if (newStatus === "rejected") {
-    //    // ✅ ดึงอุปกรณ์ที่ผูกกับ booking นี้ก่อน
-    //   const { data: equipData } = await supabase
-    //     .from("booking_equipments")
-    //     .select("equipment_id, quantity")
-    //     .eq("booking_id", bookingId);
-
-    //   // ✅ คืน stock ทีละชิ้น
-    //   if (equipData && equipData.length > 0) {
-    //     for (const item of equipData) {
-    //       await supabase.rpc("increment_stock", {
-    //         equip_id: item.equipment_id,
-    //         amount: item.quantity
-    //       });
-    //     }
-    //   }
-
-
-    //   const { error } = await supabase
-    //     .from("bookings")
-    //     .update({ status: "rejected" })
-    //     .eq("id", bookingId);
-    //   if (error) throw error;
-
-    //   // ลบ slot
-    //   // await supabase.from("slots").delete().eq("booking_id", bookingId);
-    //   await supabase.from("booking_time_slots").delete().eq("booking_id", bookingId);
-    // }
     if (newStatus === "rejected") {
-      // ✅ แค่ update status และลบ time_slots เท่านั้น
       const { error } = await supabase
         .from("bookings")
         .update({ status: "rejected" })
@@ -192,7 +163,6 @@ const updateBookingStatus = async (bookingId, newStatus) => {
     }
 
     setPendingBookings(prev => {
-      // อัปเดต status
       const updated = prev.map(b =>
         b.id === bookingId ? { ...b, status: newStatus } : b
       );
@@ -212,11 +182,9 @@ const updateBookingStatus = async (bookingId, newStatus) => {
   return (
     <div className="flex min-h-screen bg-white">
       
-      {/* 2. Main Content */}
       <main className="flex-1 p-10 bg-[#FAFAFA]">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
 
-        {/* Status Cards - ตามแบบในภาพ */}
         <div className="grid grid-cols-4 gap-4 mb-10">
           {[
             {
@@ -250,12 +218,10 @@ const updateBookingStatus = async (bookingId, newStatus) => {
           ))}
         </div>
 
-        {/* Table - ตามแบบในภาพ */}
         <div className="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold">
               <tr>
-                {/* <th className="p-4"><input type="checkbox" /></th> */}
                 <th className="p-4 uppercase">Author ↓</th>
                 <th className="p-4 uppercase">Type</th>
                 <th className="p-4 uppercase">Court</th>
@@ -269,7 +235,6 @@ const updateBookingStatus = async (bookingId, newStatus) => {
             <tbody className="divide-y divide-gray-50">
               {pendingBookings.map((b) => (
                 <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                  {/* <td className="p-4"><input type="checkbox" /></td> */}
                   <td className="p-4 flex items-center gap-3">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-300">👤</div>
                     <div>
