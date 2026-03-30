@@ -353,7 +353,7 @@ const updateBookingStatus = async (bookingId, newStatus) => {
                     </span>
 
                     <div className="text-[10px] mt-1">
-                      {b.payment_verified ? "✅ Auto" : "🧑 Manual"}
+                      {b.payment_verified ? "Auto" : "Manual"}
                     </div>
                   </td>
                 </tr>

@@ -86,19 +86,26 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     let slipData = null;
     let autoApproved = false;
 
-    try {
-      const result = await verifySlip(slipFile.buffer);
+    // try {
+    //   const result = await verifySlip(slipFile.buffer);
 
-      if (result && result.success) {
-        slipData = result.data;
+    //   if (result && result.success) {
+    //     slipData = result.data;
 
-        if (Number(slipData.amount) === Number(total_price)) {
-          autoApproved = true;
-        }
-      }
-    } catch (err) {
-      console.log("⚠️ Slip API ล่ม ใช้ manual");
-    }
+    //     if (Number(slipData.amount) === Number(total_price)) {
+    //       autoApproved = true;
+    //     }
+    //   }
+    // } catch (err) {
+    //   console.log("⚠️ Slip API ล่ม ใช้ manual");
+    // }
+    // 🧪 MOCK MODE
+    slipData = {
+      transRef: "MOCK_" + Date.now()
+    };
+
+    autoApproved = true;
+
     let transactionId = slipData?.transRef || null;
 
     if (transactionId) {

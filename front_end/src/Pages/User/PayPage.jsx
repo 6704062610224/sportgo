@@ -105,7 +105,8 @@ export default function PayPage() {
     const equipmentTotal = selectedEquipments.reduce((sum, item) => {
       return sum + (item.price * item.qty);
     }, 0);
-    formData.append('total_price', Number(equipmentTotal));
+    // formData.append('total_price', Number(equipmentTotal));
+    formData.append('total_price', Number(totalAmount));
     if (safeBookingDate) {
       formData.append('bookingDate', safeBookingDate);
     }
@@ -140,8 +141,10 @@ export default function PayPage() {
       if (result.success) {
         if (result.status === "waiting") {
           alert("สลิปกำลังรอแอดมินตรวจสอบ");
+          navigate("/history"); 
         } else {
           alert("ชำระเงินสำเร็จ!");
+          navigate("/history");
         }
       }
        else {
