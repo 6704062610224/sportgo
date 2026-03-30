@@ -270,7 +270,40 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     });
   }
 });
+app.post('/api/add-equipment', async (req, res) => {
+  try {
+    const { booking_id, equipment_price } = req.body;
 
+    // 🔥 ดึงราคาปัจจุบันก่อน
+    const { data: booking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('total_price')
+      .eq('id', booking_id)
+      .single();
+
+    if (fetchError || !booking) {
+      return res.status(400).json({ success: false, message: "หา booking ไม่เจอ" });
+    }
+
+    const newTotal = Number(booking.total_price) + Number(equipment_price);
+
+    // 🔥 อัปเดตราคาใหม่
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({ total_price: newTotal })
+      .eq('id', booking_id);
+
+    if (updateError) {
+      return res.status(400).json({ success: false, message: "อัปเดตไม่สำเร็จ" });
+    }
+
+    res.json({ success: true, new_total: newTotal });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
