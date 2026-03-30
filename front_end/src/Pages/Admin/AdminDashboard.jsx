@@ -9,6 +9,20 @@ const fetchBookings = async () => {
 
   const { data, error } = await supabase
     .from("bookings")
+    // .select(`
+    //   id,
+    //   created_at,
+    //   booking_date,
+    //   receipt_url,
+    //   status,
+    //   hold_until,
+    //   users ( username, email ),
+    //   courts ( name, category ),
+    //   booking_equipments (
+    //     quantity,
+    //     equipments ( name )
+    //   )
+    // `)
     .select(`
       id,
       created_at,
@@ -16,6 +30,7 @@ const fetchBookings = async () => {
       receipt_url,
       status,
       hold_until,
+      payment_verified,
       users ( username, email ),
       courts ( name, category ),
       booking_equipments (
@@ -46,7 +61,8 @@ const fetchBookings = async () => {
           time: b.booking_date,
           receipt_url: b.receipt_url,
           status: b.status,
-          holdUntil: b.hold_until
+          holdUntil: b.hold_until,
+          payment_verified: b.payment_verified
         };
       })
     );
@@ -229,7 +245,7 @@ const updateBookingStatus = async (bookingId, newStatus) => {
                 <th className="p-4 uppercase">Receipt</th>
                 <th className="p-4 uppercase">Payment status</th>
                 <th className="p-4 uppercase text-center">Action</th>
-                
+                <th className="p-4 uppercase">Verify</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -324,6 +340,21 @@ const updateBookingStatus = async (bookingId, newStatus) => {
                       </div>
                     )}
                     
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                      b.status === 'paid'
+                        ? 'bg-green-50 text-green-600'
+                        : b.status === 'waiting'
+                        ? 'bg-yellow-50 text-yellow-600'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {b.status}
+                    </span>
+
+                    <div className="text-[10px] mt-1">
+                      {b.payment_verified ? "✅ Auto" : "🧑 Manual"}
+                    </div>
                   </td>
                 </tr>
               ))}

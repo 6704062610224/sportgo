@@ -138,9 +138,13 @@ export default function PayPage() {
       }
 
       if (result.success) {
-        alert("จองสำเร็จ! ขอบคุณที่ใช้บริการ");
-        navigate('/history');
-      } else {
+        if (result.status === "waiting") {
+          alert("สลิปกำลังรอแอดมินตรวจสอบ");
+        } else {
+          alert("ชำระเงินสำเร็จ!");
+        }
+      }
+       else {
         alert("เกิดข้อผิดพลาด: " + (result.message || result.error));
       }
     } catch (error) {

@@ -2,10 +2,27 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-
+import axios from "axios";
 
 import multer from 'multer';
+async function verifySlip(buffer) {
+  try {
+    const response = await axios.post(
+      "https://api.slipok.com/api/line/apikey/63606",
+      buffer,
+      {
+        headers: {
+          "Content-Type": "image/jpeg"
+        }
+      }
+    );
 
+    return response.data;
+  } catch (err) {
+    console.error("❌ SlipOK error:", err.response?.data || err.message);
+    return null;
+  }
+}
 const upload = multer({
   storage: multer.memoryStorage()
 });
@@ -66,7 +83,38 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     if (!slipFile) {
       return res.status(400).json({ success: false, message: "ไม่พบไฟล์สลิป" });
     }
+    let slipData = null;
+    let autoApproved = false;
 
+    try {
+      const result = await verifySlip(slipFile.buffer);
+
+      if (result && result.success) {
+        slipData = result.data;
+
+        if (Number(slipData.amount) === Number(total_price)) {
+          autoApproved = true;
+        }
+      }
+    } catch (err) {
+      console.log("⚠️ Slip API ล่ม ใช้ manual");
+    }
+    let transactionId = slipData?.transRef || null;
+
+    if (transactionId) {
+      const { data: existing } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("transaction_id", transactionId)
+        .maybeSingle();
+
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "สลิปนี้ถูกใช้ไปแล้ว"
+        });
+      }
+    }
     const expandTimeSlots = (times) => {
       let result = [];
 
@@ -154,7 +202,7 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     }
     console.log("🔥 BEFORE UPLOAD");
     const fileName = `receipts/${Date.now()}-${slipFile.originalname}`;
-
+    const status = autoApproved ? "paid" : "waiting";
     const { error: uploadError } = await supabase.storage
       .from('receipts')
       .upload(fileName, slipFile.buffer, {
@@ -179,7 +227,10 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
       p_user_id: user_id,
       p_total_price: total_price,
       p_receipt_url: publicData.publicUrl,
-      p_equipments: selectedEquipments
+      p_equipments: selectedEquipments,
+      p_status: status,
+      p_transaction_id: transactionId,
+      p_verified: autoApproved
     });
 
     if (rpcError) {
