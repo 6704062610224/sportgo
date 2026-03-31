@@ -7,17 +7,18 @@ import axios from "axios";
 import multer from 'multer';
 async function verifySlip(buffer, mimetype) {
   try {
-    const FormData = (await import('form-data')).default;
-    const form = new FormData();
-    form.append('files', buffer, {
-      filename: 'slip.jpg',
-      contentType: mimetype || 'image/jpeg'
-    });
-
     const response = await axios.post(
       "https://api.slipok.com/api/line/apikey/63606",
-      form,
-      { headers: { ...form.getHeaders(),"x-authorization": "slipok-5b9a2551-3eca-4742-841d-b57f10db65f4" } }
+      {
+        files: buffer.toString('base64'),
+        log: true,
+      },
+      {
+        headers: {
+          "x-authorization": "slipok-5b9a2551-3eca-4742-841d-b57f10db65f4",
+          "Content-Type": "application/json",
+        }
+      }
     );
     return response.data;
   } catch (err) {
