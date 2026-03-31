@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from "react-hot-toast";
 import { supabase } from './supabaseClient';
 import Navbar from './components/Navbar';
+import Footer from './components/footer';
 
 // Public & Auth Pages
 import HomePage from './Pages/User/HomePage';
@@ -97,46 +98,49 @@ function App() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">กำลังโหลดระบบ...</div>;
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Toaster position="top-right" />
       <Router>
         <Navbar user={user} setUser={setUser} />
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage setUser={setUser} />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/booking" element={<BookingPage />} />
+            <Route path="/borrow" element={<BorrowPage />} />
 
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage setUser={setUser} />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/booking" element={<BookingPage />} />
-          <Route path="/borrow" element={<BorrowPage />} />
-
-          <Route path="/pay" element={
-            <RequireAuth user={user}><PayPage /></RequireAuth>
-          } />
-          <Route path="/history" element={
-            <RequireAuth user={user}><HistoryPage /></RequireAuth>
-          } />
-          <Route path="/profile" element={
-            <RequireAuth user={user}><ProfilePage user={user} setUser={setUser} /></RequireAuth>
-          } />
-          <Route path="/admin" element={
-            <RequireAdmin user={user}><AdminDashboard /></RequireAdmin>
-          } />
-          <Route path="/admin/courts" element={
-            <RequireAdmin user={user}><AdminCourts /></RequireAdmin>
-          } />
-          <Route path="/admin/borrow" element={
-            <RequireAdmin user={user}><ManageBorrowPage /></RequireAdmin>
-          } />
-          <Route path="/admin/history" element={
-            <RequireAdmin user={user}><AdminBookingHistory /></RequireAdmin>
-          } />
-          <Route path="/admin/equipments" element={
-            <RequireAdmin user={user}><ManageEquipmentsPage /></RequireAdmin>
-          } />
-          
-        </Routes>
+            <Route path="/pay" element={
+              <RequireAuth user={user}><PayPage /></RequireAuth>
+            } />
+            <Route path="/history" element={
+              <RequireAuth user={user}><HistoryPage /></RequireAuth>
+            } />
+            <Route path="/profile" element={
+              <RequireAuth user={user}><ProfilePage user={user} setUser={setUser} /></RequireAuth>
+            } />
+            <Route path="/admin" element={
+              <RequireAdmin user={user}><AdminDashboard /></RequireAdmin>
+            } />
+            <Route path="/admin/courts" element={
+              <RequireAdmin user={user}><AdminCourts /></RequireAdmin>
+            } />
+            <Route path="/admin/borrow" element={
+              <RequireAdmin user={user}><ManageBorrowPage /></RequireAdmin>
+            } />
+            <Route path="/admin/history" element={
+              <RequireAdmin user={user}><AdminBookingHistory /></RequireAdmin>
+            } />
+            <Route path="/admin/equipments" element={
+              <RequireAdmin user={user}><ManageEquipmentsPage /></RequireAdmin>
+            } />
+            
+          </Routes>
+        </main>
+        
+        <Footer />
       </Router>
-    </>
+    </div>
   );
 }
 
