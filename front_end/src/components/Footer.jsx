@@ -11,12 +11,12 @@ const Footer = () => {
           <a href="/" className="text-xs tracking-widest text-white  uppercase transition-colors">092-888-4155 (Koko)</a>
         </nav>
 
-        {/ Center - Logo /}
+        {/* Center - Logo */}
         <div className="absolute left-1/2 -translate-x-1/2">
           <img src={logo} alt="SportGo" className="h-8 w-auto y" />
         </div>
 
-        {/ Right - Copyright */}
+        {/* Right - Copyright */}
         <span className="text-xs text-white">
           © {new Date().getFullYear()} SportGo. All rights reserved.
         </span>

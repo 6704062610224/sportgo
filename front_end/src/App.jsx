@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from "react-hot-toast";
 import { supabase } from './supabaseClient';
 import Navbar from './components/Navbar';
-import Footer from './components/footer';
+import Footer from './components/Footer';
 
 // Public & Auth Pages
 import HomePage from './Pages/User/HomePage';
