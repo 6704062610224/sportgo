@@ -15,7 +15,7 @@ async function verifySlip(buffer, mimetype) {
       },
       {
         headers: {
-          "x-authorization": "slipok-5b9a2551-3eca-4742-841d-b57f10db65f4",
+          "x-authorization": "SLIPOKXP5YUVU",
           "Content-Type": "application/json",
         }
       }
