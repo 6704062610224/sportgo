@@ -7,14 +7,17 @@ import axios from "axios";
 import multer from 'multer';
 async function verifySlip(buffer, mimetype) {
   try {
+    const FormData = (await import('form-data')).default;
+    const form = new FormData();
+    form.append('files', buffer, {
+      filename: 'slip.jpg',
+      contentType: mimetype || 'image/jpeg'
+    });
+
     const response = await axios.post(
       "https://api.slipok.com/api/line/apikey/63606",
-      buffer,
-      {
-        headers: {
-          "Content-Type": mimetype || "image/jpeg"
-        }
-      }
+      form,
+      { headers: { ...form.getHeaders() } }
     );
     return response.data;
   } catch (err) {
@@ -83,12 +86,26 @@ app.post('/api/create-booking', upload.single('slip_image'), async (req, res) =>
     }
     let slipData = null;
     let autoApproved = false;
-    slipData = {
-      transRef: "MOCK_" + Date.now()
-    };
+    // slipData = {
+    //   transRef: "MOCK_" + Date.now()
+    // };
 
-    autoApproved = true;
+    // autoApproved = true;
+    try {
+      const result = await verifySlip(slipFile.buffer, slipFile.mimetype);
+      if (result && result.success) {
+        slipData = result.data;
+        if (Number(slipData.amount) === Number(total_price)) {
+          autoApproved = true;
+        }
+      }
+    } catch (err) {
+      console.log("Slip API ล่ม ใช้ manual");
+    }
 
+    if (!slipData) {
+      slipData = { transRef: "MANUAL_" + Date.now() };
+    }
     let transactionId = slipData?.transRef || null;
 
     if (transactionId) {
