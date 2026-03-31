@@ -331,13 +331,13 @@ export default function BorrowPage() {
     const confirmed = window.confirm("ยืนยันการยกเลิกการจองใช่ไหมครับ?");
     if (!confirmed) return;
 
-    if (bookingId) {
-      await fetch(`${API}/api/cancel-booking`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ booking_id: bookingId })
-      });
-    }
+    if (bookingId && courtAmount > 0) {
+    await fetch(`${API}/api/cancel-booking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ booking_id: bookingId })
+    });
+  }
 
     navigate('/booking');
   };

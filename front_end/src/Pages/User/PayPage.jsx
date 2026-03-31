@@ -91,6 +91,13 @@ export default function PayPage() {
   const handleConfirmPayment = async () => {
     if (!user) return alert("รอกำลังโหลดข้อมูลผู้ใช้...");
     if (!file) return alert("กรุณาแนบสลิปโอนเงินก่อนครับ");
+    
+    console.log("💰 totalAmount ที่จะจ่าย:", totalAmount);
+    console.log("💰 courtData:", courtData);
+    console.log("💰 court_id:", courtData?.id);
+    console.log("💰 selectedEquipments:", selectedEquipments);
+    console.log("💰 p_is_additional จะเป็น:", selectedEquipments.length > 0 && !courtData?.id);
+    console.log("💰 equipTotal:", selectedEquipments.reduce((sum, e) => sum + e.price * e.qty, 0));
 
     const formData = new FormData();
     formData.append('user_id', user.id);
